@@ -46,7 +46,7 @@ jobs:
         aws ecs describe-task-definition \
         --task-definition $TASK_DEF_FAMILY \
         --query "taskDefinition" \
-        | jq '{family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, tags, pidMode, ipcMode, proxyConfiguration, inferenceAccelerators, ephemeralStorage, runtimePlatform, enableFaultInjection}' \
+        | jq '{family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, tags, pidMode, ipcMode, proxyConfiguration, inferenceAccelerators, ephemeralStorage, runtimePlatform, enableFaultInjection} | with_entries(select(.value != null))' \
         > taskdef.json
 
     - name: Update Task Definition Image
