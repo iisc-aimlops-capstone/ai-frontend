@@ -1,6 +1,7 @@
 import streamlit as st
 import boto3
 import os
+from io import BytesIO
 
 st.title("AI - Plant Disease Detection and Farmer Assistance")
 
@@ -14,13 +15,16 @@ uploaded_images = st.file_uploader("Upload an image", type=['png', 'jpg', 'jpeg'
 if uploaded_images is not None:
     for image in uploaded_images:
         st.write("filename: ", image.name)
+        # Read file into memory
+        file_buffer = BytesIO(image.read())
+        file_buffer.seek(0)
         s3_client.upload_fileobj(
-            image,
+            file_buffer,
             S3_BUCKET,
             image.name,
             ExtraArgs={"ContentType": image.type}
         )
-        image.seek(0)  # Reset pointer
+        file_buffer.seek(0)
         st.markdown(
             """
             <div style="border: 2px solid #4CAF50; border-radius: 2px;
@@ -28,4 +32,4 @@ if uploaded_images is not None:
                 <strong>Image uploaded to S3!</strong>
             </div>
             """, unsafe_allow_html=True)
-        st.image(image, caption="Uploaded Image")
+        st.image(file_buffer, caption="Uploaded Image")
