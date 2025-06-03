@@ -1,3 +1,4 @@
+python
 import streamlit as st
 import boto3
 import os
@@ -15,8 +16,10 @@ uploaded_images = st.file_uploader("Upload an image", type=['png', 'jpg', 'jpeg'
 if uploaded_images is not None:
     for image in uploaded_images:
         st.write("filename: ", image.name)
-        # Read file into memory
-        file_buffer = BytesIO(image.read())
+        # Read file content once
+        file_bytes = image.read()
+        file_buffer = BytesIO(file_bytes)
+        # Upload to S3
         file_buffer.seek(0)
         s3_client.upload_fileobj(
             file_buffer,
@@ -24,7 +27,7 @@ if uploaded_images is not None:
             image.name,
             ExtraArgs={"ContentType": image.type}
         )
-        file_buffer.seek(0)
+        # Display image
         st.markdown(
             """
             <div style="border: 2px solid #4CAF50; border-radius: 2px;
@@ -32,4 +35,4 @@ if uploaded_images is not None:
                 <strong>Image uploaded to S3!</strong>
             </div>
             """, unsafe_allow_html=True)
-        st.image(file_buffer, caption="Uploaded Image")
+        st.image(BytesIO(file_bytes), caption="Uploaded Image")
