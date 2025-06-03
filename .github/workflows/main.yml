@@ -1,0 +1,74 @@
+name: Deploy Streamlit to ECS Fargate
+
+on:
+  push:
+    branches: [ main ]  # or your preferred branch
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: 671336841184.dkr.ecr.us-east-2.amazonaws.com/ecr-iisc-aimlops-cap-fe-streamlite
+  ECS_CLUSTER: ecs-cluster-iisc-aimlops-cap-fe-streamlite
+  ECS_SERVICE: ecs-cluster-iisc-aimlops-cap-fe-streamlite-service
+  TASK_DEF_FAMILY: ecs-cluster-iisc-aimlops-cap-fe-streamlite-task
+  CONTAINER_NAME: ecs-cluster-iisc-aimlops-cap-fe-streamlite-container
+
+jobs:
+  deploy:
+    name: Build, Push to ECR, Deploy to ECS
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::671336841184:role/iar-github-oidc
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build and Push Docker Image to ECR
+      run: |
+        IMAGE_TAG=latest
+        docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Download Current Task Definition
+      run: |
+        aws ecs describe-task-definition \
+          --task-definition $TASK_DEF_FAMILY \
+          --query "taskDefinition" > taskdef.json
+
+    - name: Update Task Definition Image
+      id: update-taskdef
+      run: |
+        IMAGE="$ECR_REPOSITORY:latest"
+        jq --arg IMAGE "$IMAGE" \
+           --arg NAME "$CONTAINER_NAME" \
+           '.containerDefinitions |= map(if .name == $NAME then .image = $IMAGE else . end)' \
+           taskdef.json > taskdef-updated.json
+
+    - name: Register New Task Definition
+      id: register-task-def
+      run: |
+        TASK_DEF_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file://taskdef-updated.json \
+          --query 'taskDefinition.taskDefinitionArn' \
+          --output text)
+        echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+
+    - name: Deploy New Task Definition to ECS
+      run: |
+        aws ecs update-service \
+          --cluster $ECS_CLUSTER \
+          --service $ECS_SERVICE \
+          --task-definition $TASK_DEF_ARN \
+          --force-new-deployment
