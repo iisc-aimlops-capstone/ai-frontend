@@ -38,7 +38,7 @@ jobs:
     - name: Build and Push Docker Image to ECR
       run: |
         IMAGE_TAG=latest
-        docker build -t $ECR_REPOSITORY:$IMAGE_TAG ./streamlitapp/basicapp
+        docker build -t $ECR_REPOSITORY:$IMAGE_TAG ./streamlitapp/basic_app
         docker push $ECR_REPOSITORY:$IMAGE_TAG
 
     - name: Download Current Task Definition
