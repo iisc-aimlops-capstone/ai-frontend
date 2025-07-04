@@ -11,7 +11,7 @@ st.title("AI - Plant Disease Detection and Farmer Assistance")
 # Configuration
 S3_BUCKET = os.environ.get("S3_BUCKET_NAME", "s3b-iisc-aimlops-cap-images")
 S3_REGION = os.environ.get("AWS_REGION", "us-east-2")
-FASTAPI_URL = os.environ.get("FASTAPI_URL", "http://localhost:8000")  # Update with your FastAPI URL
+FASTAPI_URL = os.environ.get("FASTAPI_URL", "https://plant-disease-detection.aichamp.publicvm.com/api")  # Update with your FastAPI URL
 
 # Initialize S3 client
 s3_client = boto3.client("s3", region_name=S3_REGION)
