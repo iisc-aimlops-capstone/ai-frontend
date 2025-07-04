@@ -1,3 +1,5 @@
 initial_test/translation_model/huggingface_interface/models/
-
+.venv/
+./streamlitapp/basic_app/.venv/
+.\streamlitapp\basic_app\.venv\
 # models/
