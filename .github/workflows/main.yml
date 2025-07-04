@@ -2,7 +2,7 @@ name: Deploy Streamlit to ECS Fargate
 
 on:
   push:
-    branches: [ dipanjan ]  # or your preferred branch
+    branches: [ main ]  # or your preferred branch
 
 env:
   AWS_REGION: us-east-2
