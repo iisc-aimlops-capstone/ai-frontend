@@ -95,6 +95,6 @@ jobs:
             --launch-type FARGATE \
             --desired-count 1 \
             --network-configuration "awsvpcConfiguration={subnets=[\"$SUBNET1\",\"$SUBNET2\"],securityGroups=[\"$SG_ID\"],assignPublicIp=\"ENABLED\"}" \
-            --load-balancers "targetGroupArn=$TARGET_GROUP_ARN,containerName=$CONTAINER_NAME,containerPort=8000" \
+            --load-balancers "targetGroupArn=$TARGET_GROUP_ARN,containerName=$CONTAINER_NAME,containerPort=8501" \
             --platform-version LATEST
         fi
