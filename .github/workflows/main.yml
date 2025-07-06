@@ -3,6 +3,7 @@ name: Deploy Streamlit to ECS Fargate
 on:
   push:
     branches: [ main ]  # or your preferred branch
+  workflow_dispatch:  # 👈 Add this line to allow manual runs
 
 env:
   AWS_REGION: us-east-2
@@ -11,10 +12,10 @@ env:
   ECS_SERVICE: ecs-svc-iisc-aimlops-cap-fe
   TASK_DEF_FAMILY: ecs-iisc-aimlops-cap-task-fe
   CONTAINER_NAME: ecs-iisc-aimlops-cap-container-fe
-  TARGET_GROUP_ARN: arn:aws:elasticloadbalancing:us-east-2:671336841184:targetgroup/tg-iisc-aimlops-cap-fe/28f758deaac37d0e
+  TARGET_GROUP_ARN: arn:aws:elasticloadbalancing:us-east-2:671336841184:targetgroup/tg-iisc-aimlops-cap-fe/c0f6b19d77250d0a
   SUBNET1: "subnet-02a7a02a9f8feff33"
   SUBNET2: "subnet-06ad8298d28daac66"
-  SG_ID: "sg-0aa4d6e1ecdf15128"
+  SG_ID: "sg-041bed7eeeb04406e"
 
 jobs:
   deploy:
