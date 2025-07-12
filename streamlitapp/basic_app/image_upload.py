@@ -126,9 +126,11 @@ if uploaded_images:
                                 language_options = {
                                     "हिंदी": "hi",
                                     "தமிழ்": "ta",
+                                    "বাংলা": "bn",
                                     "తెలుగు": "te",
                                     "മലയാളം": "ml",
-                                    "ಕನ್ನಡ": "kn"
+                                    "ಕನ್ನಡ": "kn",
+                                    "ગુજરાતી": "gu"
                                 }
                                 
                                 # The key must be unique for each image's dropdown
