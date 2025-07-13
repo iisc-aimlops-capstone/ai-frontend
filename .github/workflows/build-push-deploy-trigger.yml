@@ -92,5 +92,5 @@ jobs:
     - name: Trigger Deploy Workflow Manually
       uses: benc-uk/workflow-dispatch@v1
       with:
-        workflow: "deploy.yml"  # Name of the second workflow file
-        token: ${{ secrets.GITHUB_TOKEN }}
+        workflow: "deploy.yml"
+        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
