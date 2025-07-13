@@ -1,0 +1,141 @@
+name: Deploy Streamlit to ECS Fargate
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: 671336841184.dkr.ecr.us-east-2.amazonaws.com/ecr-iisc-aimlops-cap-fe-streamlite
+  ECS_CLUSTER: ecs-iisc-aimlops-cap
+  ECS_SERVICE: ecs-svc-iisc-aimlops-cap-fe
+  TASK_DEF_FAMILY: ecs-iisc-aimlops-cap-task-fe
+  CONTAINER_NAME: ecs-iisc-aimlops-cap-container-fe
+  TARGET_GROUP_ARN: arn:aws:elasticloadbalancing:us-east-2:671336841184:targetgroup/tg-iisc-aimlops-cap-fe/b3c5fc0536130e58
+  SUBNET1: subnet-02a7a02a9f8feff33
+  SUBNET2: subnet-06ad8298d28daac66
+  SG_ID: sg-0bb9e04286299dfe5
+  IMAGE_TAG: latest
+
+jobs:
+
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.set-tag.outputs.image-tag }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set Image Tag
+        id: set-tag
+        run: echo "image-tag=${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} ./streamlitapp/basic_app
+
+  push:
+    name: Push Docker Image to ECR
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::671336841184:role/iar-github-oidc
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Push Docker Image
+        run: |
+          docker tag ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          docker push ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+  approval:
+    name: Manual Approval
+    runs-on: ubuntu-latest
+    needs: push
+    environment:
+      name: production
+      url: https://your-app-url.com # optional
+    steps:
+      - name: Await Manual Approval
+        run: echo "Approved manually from GitHub Environment."
+
+  deploy:
+    name: Deploy to ECS Fargate
+    runs-on: ubuntu-latest
+    needs: approval
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::671336841184:role/iar-github-oidc
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download Current Task Definition
+        run: |
+          aws ecs describe-task-definition \
+          --task-definition $TASK_DEF_FAMILY \
+          --query "taskDefinition" \
+          | jq '{family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, tags, pidMode, ipcMode, proxyConfiguration, inferenceAccelerators, ephemeralStorage, runtimePlatform, enableFaultInjection} | with_entries(select(.value != null))' \
+          > taskdef.json
+
+      - name: Update Task Definition Image
+        run: |
+          IMAGE="${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
+          jq --arg IMAGE "$IMAGE" \
+             --arg NAME "$CONTAINER_NAME" \
+             '.containerDefinitions |= map(if .name == $NAME then .image = $IMAGE else . end)' \
+             taskdef.json > taskdef-updated.json
+
+      - name: Register New Task Definition
+        id: register-task-def
+        run: |
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://taskdef-updated.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+
+      - name: Create or Update ECS Service
+        run: |
+          SERVICE_EXISTS=$(aws ecs describe-services \
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE \
+            --query "services[0].status" \
+            --output text || echo "MISSING")
+
+          if [ "$SERVICE_EXISTS" = "ACTIVE" ]; then
+            echo "Service exists. Updating..."
+            aws ecs update-service \
+              --cluster $ECS_CLUSTER \
+              --service $ECS_SERVICE \
+              --task-definition $TASK_DEF_ARN \
+              --force-new-deployment
+          else
+            echo "Service does not exist. Creating..."
+            aws ecs create-service \
+              --cluster $ECS_CLUSTER \
+              --service-name $ECS_SERVICE \
+              --task-definition $TASK_DEF_ARN \
+              --launch-type FARGATE \
+              --desired-count 1 \
+              --network-configuration "awsvpcConfiguration={subnets=[\"$SUBNET1\",\"$SUBNET2\"],securityGroups=[\"$SG_ID\"],assignPublicIp=\"ENABLED\"}" \
+              --load-balancers "targetGroupArn=$TARGET_GROUP_ARN,containerName=$CONTAINER_NAME,containerPort=8501" \
+              --platform-version LATEST
