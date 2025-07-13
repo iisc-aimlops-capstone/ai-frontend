@@ -18,10 +18,13 @@ env:
 
 jobs:
   build-and-push:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
+    outputs:
+      image_uri: ${{ steps.build.outputs.image_uri }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -36,21 +39,22 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build and Push Docker Image
+        id: build
         run: |
-          IMAGE=${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
-          docker build -t $IMAGE ./streamlitapp/basic_app
-          docker push $IMAGE
+          IMAGE_URI=${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          docker build -t $IMAGE_URI ./streamlitapp/basic_app
+          docker push $IMAGE_URI
+          echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
 
   approval:
     name: Manual Approval
     runs-on: ubuntu-latest
-    needs: push
+    needs: build-and-push
     environment:
       name: production
-      url: https://your-app-url.com # optional
     steps:
       - name: Await Manual Approval
-        run: echo "Approved manually from GitHub Environment."
+        run: echo "Waiting for manual approval..."
 
   deploy:
     name: Deploy to ECS Fargate
@@ -72,10 +76,10 @@ jobs:
       - name: Download Current Task Definition
         run: |
           aws ecs describe-task-definition \
-          --task-definition $TASK_DEF_FAMILY \
-          --query "taskDefinition" \
-          | jq '{family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, tags, pidMode, ipcMode, proxyConfiguration, inferenceAccelerators, ephemeralStorage, runtimePlatform, enableFaultInjection} | with_entries(select(.value != null))' \
-          > taskdef.json
+            --task-definition $TASK_DEF_FAMILY \
+            --query "taskDefinition" \
+            | jq '{family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, tags, pidMode, ipcMode, proxyConfiguration, inferenceAccelerators, ephemeralStorage, runtimePlatform, enableFaultInjection} | with_entries(select(.value != null))' \
+            > taskdef.json
 
       - name: Update Task Definition Image
         run: |
