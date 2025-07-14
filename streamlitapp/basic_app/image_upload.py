@@ -759,7 +759,7 @@ def translate_text_content(text, target_language, fastapi_url):
     return text
 
 def display_analysis_results_with_translation(result_data, image_name, fastapi_url):
-    """Enhanced version with toggle between English and translated results"""
+    """Display English results permanently with secondary language option"""
     if not result_data or not isinstance(result_data, list) or len(result_data) == 0:
         st.error("No results received from analysis")
         return
@@ -770,9 +770,8 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
     if 'translation_cache' not in st.session_state:
         st.session_state.translation_cache = {}
     
-    # Language options (English first, then Indian languages)
-    LANGUAGES = {
-        "English": "en",
+    # Indian languages for secondary display (Hindi is default)
+    SECONDARY_LANGUAGES = {
         "Hindi": "hi",
         "Bengali": "bn", 
         "Tamil": "ta",
@@ -791,7 +790,7 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
     message = result.get("message", "")
     disease_details = result.get("disease_details", "")
     
-    # Store original results in session state (only once)
+    # Store original English results in session state (only once)
     result_key = f"result_{filename}_{hash(str(result))}"
     if result_key not in st.session_state.analysis_results:
         st.session_state.analysis_results[result_key] = {
@@ -803,88 +802,56 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
             'filename': filename
         }
     
-    # Language selection header
+    # Secondary language selection
     st.markdown("""
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                 padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
-        <h3 style="color: white; margin: 0; text-align: center;">🌐 Language Selection</h3>
+        <h3 style="color: white; margin: 0; text-align: center;">🌐 Secondary Language Selection</h3>
     </div>
     """, unsafe_allow_html=True)
     
-    # Language selection (without rerun button)
-    selected_language = st.selectbox(
-        "Select Language:",
-        options=list(LANGUAGES.keys()),
-        index=0,  # Default to English (first option)
-        key=f"lang_select_{result_key}"
+    # Language selection for secondary display
+    selected_secondary_language = st.selectbox(
+        "Select Secondary Language (English will always be shown above):",
+        options=list(SECONDARY_LANGUAGES.keys()),
+        index=0,  # Default to Hindi
+        key=f"secondary_lang_select_{result_key}"
     )
     
-    # Get current results based on selected language
-    current_results = get_translated_results(
-        st.session_state.analysis_results[result_key],
-        selected_language,
-        LANGUAGES,
+    # Get original English results
+    english_results = st.session_state.analysis_results[result_key]
+    
+    # Get translated results for secondary language
+    secondary_results = get_translated_results(
+        english_results,
+        selected_secondary_language,
+        SECONDARY_LANGUAGES,
         fastapi_url,
         result_key
     )
     
-    # Display results header
-    if selected_language != "English":
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
-                    padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
-            <h3 style="color: white; margin: 0; text-align: center;">📝 Results in {selected_language}</h3>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
-                    padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
-            <h3 style="color: white; margin: 0; text-align: center;">📝 Analysis Results</h3>
-        </div>
-        """, unsafe_allow_html=True)
+    # === DISPLAY ENGLISH RESULTS (PERMANENT) ===
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+                padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+        <h3 style="color: white; margin: 0; text-align: center;">🇺🇸 English Results</h3>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Display results
-    st.success(f"✅ Analysis complete for {filename}")
-    st.info(f"📋 **Status:** {current_results['message']}")
+    display_results_section(english_results, "English")
     
-    # Plant detection result
-    if "True" in str(current_results['is_plant']):
-        st.success(f"🌱 **Plant Detection:** {current_results['is_plant']}")
-    else:
-        st.warning(f"⚠️ **Plant Detection:** {current_results['is_plant']}")
+    # === DISPLAY SECONDARY LANGUAGE RESULTS ===
+    st.markdown("---")
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); 
+                padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+        <h3 style="color: white; margin: 0; text-align: center;">🌏 {selected_secondary_language} Results</h3>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Disease classification and confidence
-    st.info(f"🔬 **Disease Classification:** {current_results['label']}")
-    confidence_color = "🟢" if current_results['confidence'] > 80 else "🟡" if current_results['confidence'] > 60 else "🔴"
-    st.warning(f"{confidence_color} **Confidence:** {current_results['confidence']:.1f}%")
+    display_results_section(secondary_results, selected_secondary_language)
     
-    # Disease details
-    if current_results['disease_details']:
-        st.markdown("### 📖 Detailed Information")
-        sections = current_results['disease_details'].split("### ")
-        
-        for section in sections:
-            if section.strip():
-                lines = section.strip().split('\n')
-                if len(lines) > 0:
-                    section_title = lines[0]
-                    section_content = '\n'.join(lines[1:])
-                    
-                    # Icon selection (works for both English and translated)
-                    if any(word in section_title.lower() for word in ['identification', 'damage', 'पहचान', 'नुकसान', 'চিহ্নিতকরণ', 'அடையாளம்']):
-                        icon = "🔍"
-                    elif any(word in section_title.lower() for word in ['life cycle', 'जीवन चक्र', 'জীবনচক্র', 'வாழ்க்கைச் சுழற்சி']):
-                        icon = "🔄"
-                    elif any(word in section_title.lower() for word in ['solutions', 'समाधान', 'সমাধান', 'தீர்வுகள்']):
-                        icon = "💡"
-                    else:
-                        icon = "📋"
-                    
-                    with st.expander(f"{icon} {section_title}", expanded=True):
-                        st.markdown(section_content)
-    
-    # Action buttons
+    # Action buttons (only once at the bottom)
     st.markdown("---")
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -897,11 +864,62 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
         if st.button("🔄 Re-analyze", key=f"reanalyze_{result_key}"):
             st.info("Re-analysis feature coming soon!")
 
+def display_results_section(results, language_name):
+    """Display results section for a specific language"""
+    filename = results['filename']
+    
+    # Display basic results
+    st.success(f"✅ Analysis complete for {filename}")
+    st.info(f"📋 **Status:** {results['message']}")
+    
+    # Plant detection result
+    if "True" in str(results['is_plant']):
+        st.success(f"🌱 **Plant Detection:** {results['is_plant']}")
+    else:
+        st.warning(f"⚠️ **Plant Detection:** {results['is_plant']}")
+    
+    # Disease classification and confidence
+    st.info(f"🔬 **Disease Classification:** {results['label']}")
+    confidence_color = "🟢" if results['confidence'] > 80 else "🟡" if results['confidence'] > 60 else "🔴"
+    st.warning(f"{confidence_color} **Confidence:** {results['confidence']:.1f}%")
+    
+    # Disease details
+    if results['disease_details']:
+        st.markdown(f"### 📖 Detailed Information ({language_name})")
+        sections = results['disease_details'].split("### ")
+        
+        for section in sections:
+            if section.strip():
+                lines = section.strip().split('\n')
+                if len(lines) > 0:
+                    section_title = lines[0]
+                    section_content = '\n'.join(lines[1:])
+                    
+                    # Icon selection (works for both English and translated)
+                    icon = get_section_icon(section_title)
+                    
+                    with st.expander(f"{icon} {section_title}", expanded=True):
+                        st.markdown(section_content)
+
+def get_section_icon(section_title):
+    """Get appropriate icon for section title"""
+    title_lower = section_title.lower()
+    
+    if any(word in title_lower for word in ['identification', 'damage', 'पहचान', 'नुकसान', 'চিহ্নিতকরণ', 'அடையாளம்', 'గుర్తింపు', 'ओळख', 'ਪਛਾਣ']):
+        return "🔍"
+    elif any(word in title_lower for word in ['life cycle', 'जीवन चक्र', 'জীবনচক্র', 'வாழ்க்கைச் சுழற்சி', 'జీవిత చక్రం', 'जीवन चक्र', 'ਜੀਵਨ ਚੱਕਰ']):
+        return "🔄"
+    elif any(word in title_lower for word in ['solutions', 'समाधान', 'সমাধান', 'தீர்வுகள்', 'పరిష్కారాలు', 'उपाय', 'ਹੱਲ']):
+        return "💡"
+    elif any(word in title_lower for word in ['treatment', 'उपचार', 'চিকিৎসা', 'சிகிச்சை', 'చికిత్స', 'उपचार', 'ਇਲਾਜ']):
+        return "🏥"
+    elif any(word in title_lower for word in ['prevention', 'रोकथाम', 'প্রতিরোধ', 'தடுப்பு', 'నిరోధం', 'बचाव', 'ਰੋਕਥਾਮ']):
+        return "🛡️"
+    else:
+        return "📋"
+
 def get_translated_results(original_results, selected_language, languages, fastapi_url, result_key):
     """Get translated results with caching"""
-    if selected_language == "English":
-        return original_results
-    
     target_lang_code = languages[selected_language]
     cache_key = f"{result_key}_{selected_language}"
     
@@ -993,7 +1011,8 @@ if st.session_state.current_page == "Disease Detection":
     
     if uploaded_images:
         st.markdown(f"""
-        <div class="success-message">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    padding: 1rem; border-radius: 10px; margin-bottom: 1rem; color: white;">
             ✅ {len(uploaded_images)} image(s) uploaded successfully! Ready for analysis...
         </div>
         """, unsafe_allow_html=True)
@@ -1012,6 +1031,7 @@ if st.session_state.current_page == "Disease Detection":
                         unique_filename = f"{uuid.uuid4()}.{file_extension}"
                         
                         # Convert uploaded file to bytes
+                        uploaded_image.seek(0)  # Reset file pointer
                         image_bytes = io.BytesIO(uploaded_image.read())
                         
                         # Upload to S3 (you'll need to implement this function)
@@ -1046,8 +1066,7 @@ if st.session_state.current_page == "Disease Detection":
                                         if "False" in str(is_plant):
                                             st.error("❌ The uploaded image doesn't appear to be a plant. Please upload a clear image of a plant leaf or affected area.")
                                         else:
-                                            # Display results with translation options
-                                            # Store in session state to persist across interactions
+                                            # Display results with dual language support
                                             display_analysis_results_with_translation(result, uploaded_image.name, FASTAPI_URL)
                                     else:
                                         st.error("❌ Unexpected response format from analysis API.")
