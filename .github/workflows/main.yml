@@ -1,6 +1,9 @@
 name: Deploy Streamlit to ECS Fargate
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 env:
