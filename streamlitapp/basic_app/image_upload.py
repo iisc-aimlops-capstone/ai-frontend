@@ -816,7 +816,7 @@ if st.session_state.current_page == "Disease Detection":
                     with st.spinner("🚀 Uploading to cloud storage..."):
                         # Generate unique filename
                         file_extension = uploaded_image.name.split('.')[-1].lower()
-                        unique_filename = f"plant_images/{uuid.uuid4()}.{file_extension}"
+                        unique_filename = f"{uuid.uuid4()}.{file_extension}"
                         
                         # Convert uploaded file to bytes
                         image_bytes = io.BytesIO(uploaded_image.read())
