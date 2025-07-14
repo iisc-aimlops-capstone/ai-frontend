@@ -9,6 +9,9 @@ import base64
 import streamlit.components.v1 as components
 from datetime import datetime
 import uuid
+from botocore.exceptions import ClientError, NoCredentialsError
+import io
+from PIL import Image
 
 # Page Configuration
 st.set_page_config(
