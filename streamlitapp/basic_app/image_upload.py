@@ -560,8 +560,169 @@ with col2:
     if st.button("🤖 AI Chat Assistant", key="nav_chat", use_container_width=True):
         st.session_state.current_page = "Chat Assistant"
 
+
+# Configure AWS S3 client
+def get_s3_client():
+    """Initialize S3 client with credentials"""
+    try:
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=st.secrets["aws_access_key_id"],
+            aws_secret_access_key=st.secrets["aws_secret_access_key"],
+            region_name=st.secrets.get("aws_region", "us-east-1")
+        )
+        return s3_client
+    except KeyError:
+        st.error("AWS credentials not found in secrets. Please configure them in Streamlit secrets.")
+        return None
+    except Exception as e:
+        st.error(f"Error initializing S3 client: {str(e)}")
+        return None
+
+def upload_to_s3(file_obj, bucket_name, object_key):
+    """Upload file to S3 bucket"""
+    s3_client = get_s3_client()
+    if not s3_client:
+        return None
+    
+    try:
+        # Reset file pointer to beginning
+        file_obj.seek(0)
+        
+        s3_client.upload_fileobj(
+            file_obj,
+            bucket_name,
+            object_key,
+            ExtraArgs={'ContentType': 'image/jpeg'}
+        )
+        
+        # Generate S3 URL
+        s3_url = f"https://{bucket_name}.s3.amazonaws.com/{object_key}"
+        return s3_url
+        
+    except ClientError as e:
+        st.error(f"Error uploading to S3: {str(e)}")
+        return None
+    except NoCredentialsError:
+        st.error("AWS credentials not available")
+        return None
+    except Exception as e:
+        st.error(f"Unexpected error: {str(e)}")
+        return None
+
+def call_disease_detection_api(image_url, fastapi_url):
+    """Call FastAPI backend for disease detection"""
+    try:
+        # Prepare payload for your existing API
+        payload = {
+            "image_url": image_url
+        }
+        
+        # Make API call to your existing endpoint
+        response = requests.post(
+            f"{fastapi_url}/analyze_from_s3/",
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.error(f"API Error: {response.status_code} - {response.text}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error calling FastAPI: {str(e)}")
+        return None
+    except Exception as e:
+        st.error(f"Unexpected error in API call: {str(e)}")
+        return None
+
+def display_analysis_results(result_data, image_name):
+    """Display disease detection results"""
+    if not result_data or not isinstance(result_data, list) or len(result_data) == 0:
+        st.error("No results received from analysis")
+        return
+    
+    # Extract results from API response (first item in the list)
+    result = result_data[0]
+    
+    filename = result.get("filename", image_name)
+    is_plant = result.get("is_plant", "Unknown")
+    label = result.get("label", "Unknown")
+    confidence = result.get("confidence", 0) * 100  # Convert to percentage
+    message = result.get("message", "")
+    disease_details = result.get("disease_details", "")
+    
+    # Display results
+    st.success(f"✅ Analysis complete for {filename}")
+    st.info(f"📋 **Status:** {message}")
+    
+    # Plant detection result
+    if "True" in str(is_plant):
+        st.success(f"🌱 **Plant Detection:** {is_plant}")
+    else:
+        st.warning(f"⚠️ **Plant Detection:** {is_plant}")
+    
+    # Disease classification
+    col1, col2 = st.columns(2)
+    with col1:
+        st.info(f"🔬 **Disease Classification:** {label}")
+    with col2:
+        confidence_color = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
+        st.warning(f"{confidence_color} **Confidence:** {confidence:.1f}%")
+    
+    # Disease details with markdown formatting
+    if disease_details:
+        st.markdown("### 📖 Detailed Information")
+        
+        # Split the disease details into sections
+        sections = disease_details.split("### ")
+        
+        for section in sections:
+            if section.strip():
+                lines = section.strip().split('\n')
+                if len(lines) > 0:
+                    section_title = lines[0]
+                    section_content = '\n'.join(lines[1:])
+                    
+                    # Create expandable sections for better UX
+                    if section_title.lower() in ['identification', 'damage']:
+                        icon = "🔍"
+                    elif section_title.lower() in ['life cycle']:
+                        icon = "🔄"
+                    elif section_title.lower() in ['solutions']:
+                        icon = "💡"
+                    else:
+                        icon = "📋"
+                    
+                    with st.expander(f"{icon} {section_title}", expanded=True):
+                        st.markdown(section_content)
+    
+    # Add action buttons
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("📊 View Full Report", key=f"report_{filename}"):
+            st.info("Full report feature coming soon!")
+    
+    with col2:
+        if st.button("💾 Save Results", key=f"save_{filename}"):
+            st.info("Save feature coming soon!")
+    
+    with col3:
+        if st.button("🔄 Re-analyze", key=f"reanalyze_{filename}"):
+            st.info("Re-analysis feature coming soon!")
+
 # Main content based on selected page
 if st.session_state.current_page == "Disease Detection":
+    # Configuration section (you can move this to secrets or config)
+    if 'config' not in st.session_state:
+        st.session_state.config = {
+            'bucket_name': st.secrets.get("s3_bucket_name", "plant-disease-images"),
+            'fastapi_url': st.secrets.get("fastapi_url", "http://localhost:8000")
+        }
+    
     # Use Streamlit columns instead of CSS Grid
     col1, col2, col3 = st.columns(3)
     
@@ -629,7 +790,7 @@ if st.session_state.current_page == "Disease Detection":
     if uploaded_images:
         st.markdown(f"""
         <div class="success-message">
-            ✅ {len(uploaded_images)} image(s) uploaded successfully! Processing...
+            ✅ {len(uploaded_images)} image(s) uploaded successfully! Ready for analysis...
         </div>
         """, unsafe_allow_html=True)
         
@@ -641,23 +802,50 @@ if st.session_state.current_page == "Disease Detection":
                 
                 # Add processing button for each image
                 if st.button(f"🔍 Analyze {uploaded_image.name}", key=f"analyze_{idx}"):
-                    with st.spinner("🤖 AI is analyzing your plant image..."):
-                        # Simulate processing time
-                        time.sleep(2)
+                    with st.spinner("🚀 Uploading to cloud storage..."):
+                        # Generate unique filename
+                        file_extension = uploaded_image.name.split('.')[-1].lower()
+                        unique_filename = f"plant_images/{uuid.uuid4()}.{file_extension}"
                         
-                        # Here you would integrate with your actual disease detection API
-                        st.success(f"✅ Analysis complete for {uploaded_image.name}")
-                        st.info("🔬 Disease detected: Leaf Spot Disease")
-                        st.warning("⚠️ Confidence: 94.2%")
+                        # Convert uploaded file to bytes
+                        image_bytes = io.BytesIO(uploaded_image.read())
                         
-                        # Show treatment recommendations
-                        st.markdown("""
-                        **🌿 Treatment Recommendations:**
-                        - Remove affected leaves immediately
-                        - Apply copper-based fungicide
-                        - Improve air circulation
-                        - Avoid overhead watering
-                        """)
+                        # Upload to S3
+                        s3_url = upload_to_s3(
+                            image_bytes,
+                            st.session_state.config['bucket_name'],
+                            unique_filename
+                        )
+                        
+                        if s3_url:
+                            st.success("✅ Image uploaded to cloud storage!")
+                            
+                            with st.spinner("🤖 AI is analyzing your plant image..."):
+                                # Call FastAPI backend
+                                result = call_disease_detection_api(
+                                    s3_url,
+                                    st.session_state.config['fastapi_url']
+                                )
+                                
+                                if result:
+                                    # Check if the result indicates a successful analysis
+                                    if isinstance(result, list) and len(result) > 0:
+                                        first_result = result[0]
+                                        is_plant = first_result.get("is_plant", "")
+                                        
+                                        # Check if it's actually a plant
+                                        if "False" in str(is_plant):
+                                            st.error("❌ The uploaded image doesn't appear to be a plant. Please upload a clear image of a plant leaf or affected area.")
+                                        else:
+                                            # Display results
+                                            display_analysis_results(result, uploaded_image.name)
+                                    else:
+                                        st.error("❌ Unexpected response format from analysis API.")
+                                else:
+                                    st.error("❌ Analysis failed. Please try again.")
+                        else:
+                            st.error("❌ Failed to upload image. Please try again.")
+
 
 elif st.session_state.current_page == "Chat Assistant":
     # Include CSS with the HTML in components.html
