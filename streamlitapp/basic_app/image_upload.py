@@ -126,6 +126,36 @@ st.markdown("""
         transform: translateY(-3px);
         box-shadow: 0 12px 30px rgba(46, 139, 87, 0.2);
     }
+            
+    .custom-container {
+        background-color: #e8f5e9; /* A light, leaf-green color */
+        border: 1px solid #a5d6a7;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .info-step {
+        background: #f9f9f9;
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .info-step-number {
+        background-color: #2E8B57; /* A professional green */
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
     
     /* Results card styling */
     .results-card {
@@ -495,6 +525,7 @@ st.markdown("""
 S3_BUCKET = os.environ.get("S3_BUCKET_NAME", "s3b-iisc-aimlops-cap-images")
 S3_REGION = os.environ.get("AWS_REGION", "us-east-2")
 FASTAPI_URL = os.environ.get("FASTAPI_URL", "https://plant-disease-detection.aichamp.publicvm.com/api")
+# FASTAPI_URL = os.environ.get("FASTAPI_URL", "http://localhost:8000")
 
 # Initialize S3 client
 s3_client = boto3.client("s3", region_name=S3_REGION)
@@ -543,10 +574,7 @@ plant_diseases = [
 with st.sidebar:
     st.markdown("""
     <div class="sidebar-info">
-        <h2 style="color: #2E8B57; margin-bottom: 1rem;">🌱 PlantCare AI</h2>
-        <p style="color: #666; font-size: 1rem; line-height: 1.5;">
-            Advanced plant disease detection powered by cutting-edge artificial intelligence and machine learning algorithms.
-        </p>
+        <h2 style="color: #2E8B57; margin-bottom: 0.5rem;">🌱 PlantCare AI</h2>
     </div>
     """, unsafe_allow_html=True)
     
@@ -555,12 +583,12 @@ with st.sidebar:
     st.success("🌍 Multi-language support")
     st.success("☁️ Secure cloud storage")
     st.success("⚡ Real-time processing")
-    st.success("📱 Mobile-friendly interface")
+    # st.success("📱 Mobile-friendly interface")
     st.success("🎯 High accuracy detection")
     
-    st.markdown("### 🔧 System Configuration")
-    st.info(f"🌎 AWS Region: {S3_REGION}")
-    st.info(f"🪣 S3 Bucket: {S3_BUCKET}")
+    # st.markdown("### 🔧 System Configuration")
+    # st.info(f"🌎 AWS Region: {S3_REGION}")
+    # st.info(f"🪣 S3 Bucket: {S3_BUCKET}")
     st.info(f"🔗 API Status: Online")
     
     st.markdown("### 🌿 Supported Plants")
@@ -582,37 +610,103 @@ with st.sidebar:
 # Main Header with enhanced design
 st.markdown("""
 <div class="main-header">
-    <h1>🌱 PlantCare AI</h1>
-    <p>Professional Plant Disease Detection & Smart Farming Solutions</p>
+    <h1>AI-Powered Plant Disease Detection and Farmer Assistance Using Generative AI</h1>
+    <p style="color: #666; font-size: 1rem; line-height: 1.5;">
+            Advanced plant disease detection powered by cutting-edge artificial intelligence and machine learning algorithms.
+        </p>
 </div>
 """, unsafe_allow_html=True)
 
-# Plant Disease Showcase Section
+# ================================================================
+# --- Data for the page ---
+plant_diseases = [
+    {"emoji": "🍃", "name": "Leaf Blight", "description": "A fungal disease causing brown spots on leaves."},
+    {"emoji": "⚪", "name": "Powdery Mildew", "description": "Appears as white, powdery patches on plant surfaces."},
+    {"emoji": "🦠", "name": "Root Rot", "description": "Caused by excessive moisture and poor drainage."},
+    {"emoji": "🐛", "name": "Aphid Infestation", "description": "Small insects that cluster on stems and leaves."},
+    {"emoji": "🔴", "name": "Bacterial Spot", "description": "Results in small, water-soaked lesions."},
+    {"emoji": "🌈", "name": "Mosaic Virus", "description": "Causes a mottled pattern on leaves."},
+]
+
+how_it_works_steps = [
+    {"number": 1, "emoji": "📤", "title": "Upload Images", "text": "Select high-quality plant images from your device."},
+    {"number": 2, "emoji": "☁️", "title": "Secure Storage", "text": "Images are securely uploaded to AWS S3 cloud storage."},
+    {"number": 3, "emoji": "🔍", "title": "AI Analysis", "text": "Our AI model analyzes images using deep learning."},
+    {"number": 4, "emoji": "📊", "title": "Detailed Results", "text": "Get comprehensive analysis and recommendations."},
+    {"number": 5, "emoji": "🌍", "title": "Multi-Language", "text": "Access details in your preferred regional language."},
+    {"number": 6, "emoji": "💡", "title": "Recommendations", "text": "Receive expert tips for optimal plant health."},
+]
+
+# --- Add the CSS needed for the "info-step" card style ---
 st.markdown("""
-<div class="disease-showcase">
-    <h2 style="text-align: center; color: #e65100; margin-bottom: 2rem; font-size: 2.2rem;">
-        🔍 Common Plant Diseases We Detect
-    </h2>
-    <p style="text-align: center; color: #666; font-size: 1.1rem; margin-bottom: 2rem;">
-        Our AI system is trained to identify various plant diseases with high accuracy
-    </p>
-</div>
+<style>
+    .info-step {
+        background: #f9f9f9;
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        height: 150px; /* Set a fixed height for all cards */
+    }
+    .info-step-number {
+        background-color: #2E8B57;
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+</style>
 """, unsafe_allow_html=True)
 
-# Display disease cards in a grid
-cols = st.columns(3)
-for i, disease in enumerate(plant_diseases):
-    with cols[i % 3]:
-        st.markdown(f"""
-        <div class="disease-card">
-            <div style="text-align: center; margin-bottom: 1rem;">
-                <span style="font-size: 3rem;">{disease['emoji']}</span>
-            </div>
-            <div class="disease-name">{disease['name']}</div>
-            <div class="disease-description">{disease['description']}</div>
-        </div>
-        """, unsafe_allow_html=True)
+# --- Professional Tabbed Layout ---
+# st.markdown("---")
+st.subheader("System Information & Capabilities")
 
+# 1. Create the tabs
+tab1, tab2 = st.tabs(["🔍 Common Plant Diseases", "ℹ️ How PlantCare AI Works"])
+
+# 2. Populate the first tab
+with tab1:
+    st.write("Our AI system is trained to identify the following plant diseases with high accuracy.")
+    # Use a 3-column grid for the showcase
+    cols = st.columns(3)
+    for i, disease in enumerate(plant_diseases):
+        with cols[i % 3]:
+            st.markdown(f"""
+            <div class="info-step">
+                <div class="info-step-number">{i + 1}</div>
+                <div>
+                    <h4 style="color: #2E8B57; margin: 0 0 0.25rem 0;">{disease['emoji']} {disease['name']}</h4>
+                    <p style="color: #333; margin: 0;">{disease['description']}</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+# 3. Populate the second tab
+with tab2:
+    st.write("Our system follows a simple, robust process for analysis from upload to recommendation.")
+    # A single column is best for sequential steps
+    cols = st.columns(3)
+    for i, step in enumerate(how_it_works_steps):
+        with cols[i % 3]:
+            st.markdown(f"""
+            <div class="info-step">
+                <div class="info-step-number">{step['number']}</div>
+                <div>
+                    <h4 style="color: #2E8B57; margin: 0 0 0.25rem 0;">{step['emoji']} {step['title']}</h4>
+                    <p style="color: #333; margin: 0;">{step['text']}</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+# ================================================================
 # Upload Section with enhanced styling
 # Upload Section with styled dropzone container
 with st.container():
@@ -698,16 +792,25 @@ if uploaded_images:
             with st.spinner('🤖 Our advanced AI is analyzing your plant image for diseases...'):
                 try:
                     # Call FastAPI endpoint for analysis
+                    # uncomment for local test
+                    # files_to_send = [
+                    #     ('files', (image.name, image.getvalue(), image.type))
+                    # ]
                     response = requests.post(
+                        # use this for deployment
                         f"{FASTAPI_URL}/analyze_from_s3/",
                         json={
                             "file_key": image.name
                         },
                         timeout=30
+                        # Uncommment for local testing
+                        # f"{FASTAPI_URL}/validate_and_classify/",
+                        # files=files_to_send,
                     )
                     
                     if response.status_code == 200:
                         result = response.json()
+                        # result = result[0]
                         
                         # Display results in enhanced format
                         st.markdown("### 📊 Detailed Analysis Results")
@@ -936,84 +1039,124 @@ if uploaded_images:
     # Clear progress bar
     progress_bar.empty()
 
-# Enhanced Information Section
-st.markdown("---")
+
+
+# Backend Status Check with enhanced design
+# st.markdown("---")
+# st.markdown("""
+# <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 2rem; border-radius: 20px; margin: 2rem 0; border: 2px solid #2196f3; text-align: center;">
+#     <h2 style="color: #0d47a1; margin-bottom: 1rem; font-size: 2.2rem;">
+#         🔧 System Health Status
+#     </h2>
+#     <p style="color: #666; font-size: 1.1rem; margin-bottom: 2rem;">
+#         Monitor the real-time health of our backend services and infrastructure.
+#     </p>
+# """, unsafe_allow_html=True)
+
+# col1, col2, col3 = st.columns(3)
+
+# with col1:
+#     st.markdown("""
+#     <div style="background: white; padding: 2rem; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 1rem;">
+#         <div style="font-size: 2.5rem; margin-bottom: 1rem;">🖥️</div>
+#         <h4 style="color: #2196f3; margin-bottom: 0.5rem;">API Server</h4>
+#         <p style="color: #666; font-size: 0.9rem; margin: 0;">FastAPI Backend</p>
+#     </div>
+#     """, unsafe_allow_html=True)
+
+# with col2:
+#     st.markdown("""
+#     <div style="background: white; padding: 2rem; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 1rem;">
+#         <div style="font-size: 2.5rem; margin-bottom: 1rem;">☁️</div>
+#         <h4 style="color: #2196f3; margin-bottom: 0.5rem;">Cloud Storage</h4>
+#         <p style="color: #666; font-size: 0.9rem; margin: 0;">AWS S3 Service</p>
+#     </div>
+#     """, unsafe_allow_html=True)
+
+# with col3:
+#     st.markdown("""
+#     <div style="background: white; padding: 2rem; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 1rem;">
+#         <div style="font-size: 2.5rem; margin-bottom: 1rem;">🤖</div>
+#         <h4 style="color: #2196f3; margin-bottom: 0.5rem;">AI Model</h4>
+#         <p style="color: #666; font-size: 0.9rem; margin: 0;">ML Inference Engine</p>
+#     </div>
+#     """, unsafe_allow_html=True)
+
+# # This button is now visually inside the box above
+# if st.button("🔍 Check System Health", use_container_width=False): # Set width as needed
+#     try:
+#         with st.spinner('🔄 Performing comprehensive health check...'):
+#             health_response = requests.get(f"{FASTAPI_URL}/health/", timeout=5)
+#             if health_response.status_code == 200:
+#                 st.markdown("""
+#                 <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 1.5rem; border-radius: 15px; text-align: center; margin-top: 2rem; border: 2px solid #28a745;">
+#                     <div style="font-size: 2.5rem; margin-bottom: 1rem;">✅</div>
+#                     <h3 style="color: #155724; margin-bottom: 0.5rem;">All Systems Operational</h3>
+#                     <p style="color: #155724; font-size: 1.1rem; margin: 0;">Backend service is healthy and running perfectly!</p>
+#                 </div>
+#                 """, unsafe_allow_html=True)
+#                 st.balloons()
+#             else:
+#                 st.markdown(f"""
+#                 <div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); padding: 1.5rem; border-radius: 15px; text-align: center; margin-top: 2rem; border: 2px solid #dc3545;">
+#                     <div style="font-size: 2.5rem; margin-bottom: 1rem;">⚠️</div>
+#                     <h3 style="color: #721c24; margin-bottom: 0.5rem;">Service Issue Detected</h3>
+#                     <p style="color: #721c24; font-size: 1.1rem; margin: 0;">Status Code: {health_response.status_code}</p>
+#                 </div>
+#                 """, unsafe_allow_html=True)
+#     except Exception as e:
+#         st.markdown(f"""
+#         <div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); padding: 1.5rem; border-radius: 15px; text-align: center; margin-top: 2rem; border: 2px solid #dc3545;">
+#             <div style="font-size: 2.5rem; margin-bottom: 1rem;">❌</div>
+#             <h3 style="color: #721c24; margin-bottom: 0.5rem;">Connection Error</h3>
+#             <p style="color: #721c24; font-size: 1.1rem; margin: 0;">Unable to reach backend service.</p>
+#         </div>
+#         """, unsafe_allow_html=True)
+
+# ----------------------------
 st.markdown("""
-<div class="info-section">
-    <div class="info-header">ℹ️ How PlantCare AI Works</div>
-    <p style="text-align: center; color: #666; font-size: 1.1rem; margin-bottom: 2rem;">
-        Our state-of-the-art AI system uses advanced computer vision and machine learning
-    </p>
-</div>
+<style>
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: #e3f2fd;  /* A light blue color */
+        border-radius: 15px;          /* Optional: for rounded corners */
+        border: 2px solid #90caf9;    /* A slightly darker blue border */
+        padding: 1rem;                /* Add some space inside the box */
+    }
+</style>
 """, unsafe_allow_html=True)
-
-# Enhanced process steps
-col1, col2 = st.columns(2)
-
-with col1:
+# Use st.container(border=True) to create a reliable visual block
+with st.container(border=True):
+    # 1. Add the header text
     st.markdown("""
-    <div class="info-step">
-        <div class="info-step-number">1</div>
-        <div style="display: inline-block; vertical-align: top;">
-            <h4 style="color: #2E8B57; margin-bottom: 0.5rem;">📤 Upload Images</h4>
-            <p style="color: #666; margin: 0;">Select high-quality plant images from your device. Our system supports multiple formats.</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="info-step">
-        <div class="info-step-number">2</div>
-        <div style="display: inline-block; vertical-align: top;">
-            <h4 style="color: #2E8B57; margin-bottom: 0.5rem;">☁️ Secure Storage</h4>
-            <p style="color: #666; margin: 0;">Images are securely uploaded to AWS S3 cloud storage with enterprise-grade security.</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="info-step">
-        <div class="info-step-number">3</div>
-        <div style="display: inline-block; vertical-align: top;">
-            <h4 style="color: #2E8B57; margin-bottom: 0.5rem;">🔍 AI Analysis</h4>
-            <p style="color: #666; margin: 0;">Our advanced AI model analyzes images using deep learning for accurate disease detection.</p>
-        </div>
-    </div>
+    <h2 style="text-align: center; color: #0d47a1;">🔧 System Health Status</h2>
+    <p style="text-align: center; color: #666;">
+        Monitor the real-time health of our backend services and infrastructure.
+    </p>
     """, unsafe_allow_html=True)
 
-with col2:
-    st.markdown("""
-    <div class="info-step">
-        <div class="info-step-number">4</div>
-        <div style="display: inline-block; vertical-align: top;">
-            <h4 style="color: #2E8B57; margin-bottom: 0.5rem;">📊 Detailed Results</h4>
-            <p style="color: #666; margin: 0;">Get comprehensive analysis results with disease information and treatment recommendations.</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="info-step">
-        <div class="info-step-number">5</div>
-        <div style="display: inline-block; vertical-align: top;">
-            <h4 style="color: #2E8B57; margin-bottom: 0.5rem;">🌍 Multi-Language</h4>
-            <p style="color: #666; margin: 0;">Access disease details in your preferred regional language for better understanding.</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="info-step">
-        <div class="info-step-number">6</div>
-        <div style="display: inline-block; vertical-align: top;">
-            <h4 style="color: #2E8B57; margin-bottom: 0.5rem;">💡 Recommendations</h4>
-            <p style="color: #666; margin: 0;">Receive expert treatment recommendations and prevention tips for optimal plant health.</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # 2. Add a centered button
+    # To center the button, we place it inside a column
+    # col1, col2, col3 = st.columns([1, 2, 1]) # Create 3 columns, use the middle one
+    # with col2:
+    check_clicked = st.button("🔍 Check System Health", use_container_width=True)
+
+    # 3. Add the logic for when the button is clicked
+    if check_clicked:
+        try:
+            with st.spinner('🔄 Performing comprehensive health check...'):
+                health_response = requests.get(f"{FASTAPI_URL}/health/", timeout=5)
+                if health_response.status_code == 200:
+                    # st.success("✅ All Systems Operational: Backend is healthy!")
+                    st.toast('Application is Operational and healthy!', icon='✅') # Replaced st.balloons()
+                else:
+                    st.warning(f"⚠️ Service Issue Detected: Status Code {health_response.status_code}", icon="❗")
+        except Exception as e:
+            st.error("❌ Connection Error: Unable to reach backend service.", icon="🔌")
+
+# ----------------------------
 
 # AI Technology Showcase
-st.markdown("---")
+# st.markdown("---")
 st.markdown("""
 <div style="background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); padding: 3rem; border-radius: 20px; margin: 2rem 0; border: 2px solid #ba68c8;">
     <h2 style="text-align: center; color: #6a1b9a; margin-bottom: 2rem; font-size: 2.2rem;">
@@ -1039,77 +1182,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Backend Status Check with enhanced design
-st.markdown("---")
-st.markdown("""
-<div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 3rem; border-radius: 20px; margin: 2rem 0; border: 2px solid #2196f3;">
-    <h2 style="text-align: center; color: #0d47a1; margin-bottom: 1rem; font-size: 2.2rem;">
-        🔧 System Health Status
-    </h2>
-    <p style="text-align: center; color: #666; font-size: 1.1rem; margin-bottom: 2rem;">
-        Monitor the real-time health of our backend services and infrastructure
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown("""
-    <div style="background: white; padding: 2rem; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 1rem;">
-        <div style="font-size: 2.5rem; margin-bottom: 1rem;">🖥️</div>
-        <h4 style="color: #2196f3; margin-bottom: 0.5rem;">API Server</h4>
-        <p style="color: #666; font-size: 0.9rem; margin: 0;">FastAPI Backend</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col2:
-    st.markdown("""
-    <div style="background: white; padding: 2rem; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 1rem;">
-        <div style="font-size: 2.5rem; margin-bottom: 1rem;">☁️</div>
-        <h4 style="color: #2196f3; margin-bottom: 0.5rem;">Cloud Storage</h4>
-        <p style="color: #666; font-size: 0.9rem; margin: 0;">AWS S3 Service</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col3:
-    st.markdown("""
-    <div style="background: white; padding: 2rem; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 1rem;">
-        <div style="font-size: 2.5rem; margin-bottom: 1rem;">🤖</div>
-        <h4 style="color: #2196f3; margin-bottom: 0.5rem;">AI Model</h4>
-        <p style="color: #666; font-size: 0.9rem; margin: 0;">ML Inference Engine</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-if st.button("🔍 Check Complete System Health", use_container_width=True):
-    try:
-        with st.spinner('🔄 Performing comprehensive health check...'):
-            health_response = requests.get(f"{FASTAPI_URL}/health/", timeout=5)
-            if health_response.status_code == 200:
-                st.markdown("""
-                <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 2rem; border-radius: 15px; text-align: center; margin: 1rem 0; border: 2px solid #28a745;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
-                    <h3 style="color: #155724; margin-bottom: 1rem;">All Systems Operational</h3>
-                    <p style="color: #155724; font-size: 1.1rem; margin: 0;">Backend service is healthy and running perfectly!</p>
-                </div>
-                """, unsafe_allow_html=True)
-                st.balloons()
-            else:
-                st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); padding: 2rem; border-radius: 15px; text-align: center; margin: 1rem 0; border: 2px solid #dc3545;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
-                    <h3 style="color: #721c24; margin-bottom: 1rem;">Service Issue Detected</h3>
-                    <p style="color: #721c24; font-size: 1.1rem; margin: 0;">Status Code: {health_response.status_code}</p>
-                </div>
-                """, unsafe_allow_html=True)
-    except Exception as e:
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); padding: 2rem; border-radius: 15px; text-align: center; margin: 1rem 0; border: 2px solid #dc3545;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
-            <h3 style="color: #721c24; margin-bottom: 1rem;">Connection Error</h3>
-            <p style="color: #721c24; font-size: 1.1rem; margin: 0;">Unable to reach backend service: {str(e)}</p>
-        </div>
-        """, unsafe_allow_html=True)
+# ----------------------------
 
 # Enhanced Footer
 components.html("""
