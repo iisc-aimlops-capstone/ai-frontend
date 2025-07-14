@@ -623,12 +623,12 @@ def upload_to_s3(file_obj, bucket_name, object_key):
         st.error(f"Unexpected error: {str(e)}")
         return None
 
-def call_disease_detection_api(image_url, fastapi_url):
+def call_disease_detection_api(s3_url, fastapi_url, file_key):
     """Call FastAPI backend for disease detection"""
     try:
-        # Prepare payload for your existing API
+        # Prepare payload with file_key instead of image_url
         payload = {
-            "image_url": image_url
+            "file_key": file_key
         }
         
         # Make API call to your existing endpoint
@@ -832,13 +832,19 @@ if st.session_state.current_page == "Disease Detection":
                             st.success("✅ Image uploaded to cloud storage!")
                             
                             with st.spinner("🤖 AI is analyzing your plant image..."):
-                                # Call FastAPI backend
+                                # Call FastAPI backend with file_key instead of s3_url
                                 result = call_disease_detection_api(
-                                    s3_url,
-                                    FASTAPI_URL
+                                    s3_url,  # Keep this for potential logging/debugging
+                                    FASTAPI_URL,
+                                    unique_filename  # This is the file_key your API expects
                                 )
                                 
                                 if result:
+                                    # Note: Your API returns a single object, not a list
+                                    # So we need to wrap it in a list for display_analysis_results
+                                    if isinstance(result, dict):
+                                        result = [result]  # Convert to list format
+                                    
                                     # Check if the result indicates a successful analysis
                                     if isinstance(result, list) and len(result) > 0:
                                         first_result = result[0]
