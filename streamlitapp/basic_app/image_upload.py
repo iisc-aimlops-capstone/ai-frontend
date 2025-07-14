@@ -716,6 +716,36 @@ def display_analysis_results(result_data, image_name):
         st.error(f"Unexpected error in translation API call: {str(e)}")
         return None
 
+def call_translation_api(text, target_language, fastapi_url):
+    """Call FastAPI backend for translation"""
+    try:
+        # Prepare payload for translation API
+        payload = {
+            "text": text,
+            "target_language": target_language
+        }
+        
+        # Make API call to translation endpoint
+        response = requests.post(
+            f"{fastapi_url}/translate",
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.error(f"Translation API Error: {response.status_code} - {response.text}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error calling Translation API: {str(e)}")
+        return None
+    except Exception as e:
+        st.error(f"Unexpected error in translation API call: {str(e)}")
+        return None
+
 def translate_text_content(text, target_language, fastapi_url):
     """Translate text content and return translated text"""
     if not text or not text.strip():
@@ -729,21 +759,21 @@ def translate_text_content(text, target_language, fastapi_url):
     return text
 
 def display_analysis_results_with_translation(result_data, image_name, fastapi_url):
-    """Display disease detection results with translation options"""
+    """Display disease detection results with translation options - Hindi as default"""
     if not result_data or not isinstance(result_data, list) or len(result_data) == 0:
         st.error("No results received from analysis")
         return
     
-    # Language options
+    # Language options - Hindi first for default selection
     LANGUAGES = {
         "Hindi": "hi",
+        "English": "en",
         "Bengali": "bn", 
         "Tamil": "ta",
         "Telugu": "te",
         "Marathi": "mr",
         "Gujarati": "gu",
-        "Punjabi": "pa",
-        "English": "en"
+        "Punjabi": "pa"
     }
     
     # Extract results from API response (first item in the list)
@@ -770,13 +800,10 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
         else:
             st.warning(f"⚠️ **Plant Detection:** {is_plant}")
         
-        # Disease classification
-        col1, col2 = st.columns(2)
-        with col1:
-            st.info(f"🔬 **Disease Classification:** {label}")
-        with col2:
-            confidence_color = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
-            st.warning(f"{confidence_color} **Confidence:** {confidence:.1f}%")
+        # Disease classification and confidence - using containers instead of nested columns
+        st.info(f"🔬 **Disease Classification:** {label}")
+        confidence_color = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
+        st.warning(f"{confidence_color} **Confidence:** {confidence:.1f}%")
         
         # Disease details with markdown formatting
         if disease_details:
@@ -805,17 +832,17 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
                         with st.expander(f"{icon} {section_title}", expanded=True):
                             st.markdown(section_content)
         
-        # Add action buttons
-        col1, col2, col3 = st.columns(3)
-        with col1:
+        # Add action buttons - using horizontal layout with st.container
+        st.markdown("---")
+        button_container = st.container()
+        with button_container:
+            # Create button layout using st.columns at the top level
             if st.button("📊 View Full Report", key=f"report_{filename}"):
                 st.info("Full report feature coming soon!")
-        
-        with col2:
+            
             if st.button("💾 Save Results", key=f"save_{filename}"):
                 st.info("Save feature coming soon!")
-        
-        with col3:
+            
             if st.button("🔄 Re-analyze", key=f"reanalyze_{filename}"):
                 st.info("Re-analysis feature coming soon!")
     
@@ -828,11 +855,11 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
         </div>
         """, unsafe_allow_html=True)
         
-        # Language selection
+        # Language selection - Hindi as default
         selected_language = st.selectbox(
             "Select Language:",
             options=list(LANGUAGES.keys()),
-            index=0,  # Default to Hindi
+            index=list(LANGUAGES.keys()).index("Hindi"),  # Default to Hindi
             key=f"lang_select_{filename}"
         )
         
@@ -884,7 +911,54 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
                     
                     st.success(f"✅ Translation to {selected_language} completed!")
             else:
-                st.info("English is already the default language.")
+                st.info("Results are already in English.")
+        
+        # Auto-translate to Hindi button (since it's default)
+        if st.button("🇮🇳 Auto-translate to Hindi", key=f"auto_hindi_{filename}"):
+            target_lang_code = "hi"
+            
+            with st.spinner("🌐 Translating to Hindi..."):
+                # Create a container for translated results
+                st.markdown("### 📝 Results in Hindi")
+                
+                # Translate message
+                translated_message = translate_text_content(message, target_lang_code, fastapi_url)
+                st.info(f"📋 **Status:** {translated_message}")
+                
+                # Translate label
+                translated_label = translate_text_content(label, target_lang_code, fastapi_url)
+                st.info(f"🔬 **Disease Classification:** {translated_label}")
+                
+                # Translate disease details
+                if disease_details:
+                    translated_details = translate_text_content(disease_details, target_lang_code, fastapi_url)
+                    
+                    st.markdown("### 📖 Detailed Information")
+                    
+                    # Split the translated disease details into sections
+                    sections = translated_details.split("### ")
+                    
+                    for section in sections:
+                        if section.strip():
+                            lines = section.strip().split('\n')
+                            if len(lines) > 0:
+                                section_title = lines[0]
+                                section_content = '\n'.join(lines[1:])
+                                
+                                # Create expandable sections for better UX
+                                if any(word in section_title.lower() for word in ['identification', 'damage', 'पहचान', 'नुकसान']):
+                                    icon = "🔍"
+                                elif any(word in section_title.lower() for word in ['life cycle', 'जीवन चक्र']):
+                                    icon = "🔄"
+                                elif any(word in section_title.lower() for word in ['solutions', 'समाधान']):
+                                    icon = "💡"
+                                else:
+                                    icon = "📋"
+                                
+                                with st.expander(f"{icon} {section_title}", expanded=False):
+                                    st.markdown(section_content)
+                
+                st.success("✅ Translation to Hindi completed!")
         
         # Language info
         st.markdown("""
@@ -901,47 +975,6 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
             </ul>
         </div>
         """, unsafe_allow_html=True)
-
-    # Disease details with markdown formatting
-    if disease_details:
-        st.markdown("### 📖 Detailed Information")
-        
-        # Split the disease details into sections
-        sections = disease_details.split("### ")
-        
-        for section in sections:
-            if section.strip():
-                lines = section.strip().split('\n')
-                if len(lines) > 0:
-                    section_title = lines[0]
-                    section_content = '\n'.join(lines[1:])
-                    
-                    # Create expandable sections for better UX
-                    if section_title.lower() in ['identification', 'damage']:
-                        icon = "🔍"
-                    elif section_title.lower() in ['life cycle']:
-                        icon = "🔄"
-                    elif section_title.lower() in ['solutions']:
-                        icon = "💡"
-                    else:
-                        icon = "📋"
-                    
-                    with st.expander(f"{icon} {section_title}", expanded=True):
-                        st.markdown(section_content)
-    
-    # Add action buttons
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("📊 View Full Report", key=f"report_{filename}"):
-            st.info("Full report feature coming soon!")
-    
-    with col2:
-        if st.button("💾 Save Results", key=f"save_{filename}"):
-            st.info("Save feature coming soon!")
-    
-    with col3:
-        if st.button("🔄 Re-analyze", key=f"reanalyze_{filename}"):
-            st.info("Re-analysis feature coming soon!")
 
 # Main content based on selected page
 if st.session_state.current_page == "Disease Detection":
