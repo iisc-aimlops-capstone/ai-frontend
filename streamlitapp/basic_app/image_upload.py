@@ -758,15 +758,43 @@ def translate_text_content(text, target_language, fastapi_url):
         return result.get('translated_text', text)
     return text
 
-def display_analysis_results_with_translation(result_data, image_name, fastapi_url):
-    """Display English results permanently with secondary language option"""
-    if not result_data or not isinstance(result_data, list) or len(result_data) == 0:
-        st.error("No results received from analysis")
+def store_analysis_results(result_data, image_name):
+    """Store analysis results in session state"""
+    if 'stored_results' not in st.session_state:
+        st.session_state.stored_results = []
+    
+    # Extract results from API response
+    result = result_data[0]
+    filename = result.get("filename", image_name)
+    is_plant = result.get("is_plant", "Unknown")
+    label = result.get("label", "Unknown")
+    confidence = result.get("confidence", 0) * 100
+    message = result.get("message", "")
+    disease_details = result.get("disease_details", "")
+    
+    # Create result object
+    result_obj = {
+        'id': str(uuid.uuid4()),
+        'filename': filename,
+        'is_plant': is_plant,
+        'label': label,
+        'confidence': confidence,
+        'message': message,
+        'disease_details': disease_details,
+        'timestamp': str(uuid.uuid4())  # Simple timestamp substitute
+    }
+    
+    # Add to stored results
+    st.session_state.stored_results.append(result_obj)
+    
+    return result_obj
+
+def display_all_stored_results(fastapi_url):
+    """Display all stored results with dual language support"""
+    if 'stored_results' not in st.session_state or not st.session_state.stored_results:
         return
     
-    # Initialize session state for persistent storage
-    if 'analysis_results' not in st.session_state:
-        st.session_state.analysis_results = {}
+    # Initialize translation cache if not exists
     if 'translation_cache' not in st.session_state:
         st.session_state.translation_cache = {}
     
@@ -781,28 +809,7 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
         "Punjabi": "pa"
     }
     
-    # Extract results from API response
-    result = result_data[0]
-    filename = result.get("filename", image_name)
-    is_plant = result.get("is_plant", "Unknown")
-    label = result.get("label", "Unknown")
-    confidence = result.get("confidence", 0) * 100
-    message = result.get("message", "")
-    disease_details = result.get("disease_details", "")
-    
-    # Store original English results in session state (only once)
-    result_key = f"result_{filename}_{hash(str(result))}"
-    if result_key not in st.session_state.analysis_results:
-        st.session_state.analysis_results[result_key] = {
-            'is_plant': is_plant,
-            'label': label,
-            'confidence': confidence,
-            'message': message,
-            'disease_details': disease_details,
-            'filename': filename
-        }
-    
-    # Secondary language selection
+    # Global secondary language selection (affects all results)
     st.markdown("""
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                 padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
@@ -815,54 +822,59 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
         "Select Secondary Language (English will always be shown above):",
         options=list(SECONDARY_LANGUAGES.keys()),
         index=0,  # Default to Hindi
-        key=f"secondary_lang_select_{result_key}"
+        key="global_secondary_language"
     )
     
-    # Get original English results
-    english_results = st.session_state.analysis_results[result_key]
-    
-    # Get translated results for secondary language
-    secondary_results = get_translated_results(
-        english_results,
-        selected_secondary_language,
-        SECONDARY_LANGUAGES,
-        fastapi_url,
-        result_key
-    )
-    
-    # === DISPLAY ENGLISH RESULTS (PERMANENT) ===
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
-                padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
-        <h3 style="color: white; margin: 0; text-align: center;">🇺🇸 English Results</h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    display_results_section(english_results, "English")
-    
-    # === DISPLAY SECONDARY LANGUAGE RESULTS ===
-    st.markdown("---")
-    st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); 
-                padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
-        <h3 style="color: white; margin: 0; text-align: center;">🌏 {selected_secondary_language} Results</h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    display_results_section(secondary_results, selected_secondary_language)
-    
-    # Action buttons (only once at the bottom)
-    st.markdown("---")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("📊 View Full Report", key=f"report_{result_key}"):
-            st.info("Full report feature coming soon!")
-    with col2:
-        if st.button("💾 Save Results", key=f"save_{result_key}"):
-            st.info("Save feature coming soon!")
-    with col3:
-        if st.button("🔄 Re-analyze", key=f"reanalyze_{result_key}"):
-            st.info("Re-analysis feature coming soon!")
+    # Display all stored results
+    for idx, result_obj in enumerate(st.session_state.stored_results):
+        st.markdown(f"## 📊 Analysis Result {idx + 1}")
+        
+        # Get translated results for secondary language
+        secondary_results = get_translated_results(
+            result_obj,
+            selected_secondary_language,
+            SECONDARY_LANGUAGES,
+            fastapi_url
+        )
+        
+        # === DISPLAY ENGLISH RESULTS (PERMANENT) ===
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+                    padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+            <h3 style="color: white; margin: 0; text-align: center;">🇺🇸 English Results</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        display_results_section(result_obj, "English")
+        
+        # === DISPLAY SECONDARY LANGUAGE RESULTS ===
+        st.markdown("---")
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); 
+                    padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+            <h3 style="color: white; margin: 0; text-align: center;">🌏 {selected_secondary_language} Results</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        display_results_section(secondary_results, selected_secondary_language)
+        
+        # Action buttons for each result
+        st.markdown("---")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("📊 View Full Report", key=f"report_{result_obj['id']}"):
+                st.info("Full report feature coming soon!")
+        with col2:
+            if st.button("💾 Save Results", key=f"save_{result_obj['id']}"):
+                st.info("Save feature coming soon!")
+        with col3:
+            if st.button("🔄 Re-analyze", key=f"reanalyze_{result_obj['id']}"):
+                st.info("Re-analysis feature coming soon!")
+        
+        # Add separator between results
+        if idx < len(st.session_state.stored_results) - 1:
+            st.markdown("---")
+            st.markdown("<br>", unsafe_allow_html=True)
 
 def display_results_section(results, language_name):
     """Display results section for a specific language"""
@@ -918,21 +930,23 @@ def get_section_icon(section_title):
     else:
         return "📋"
 
-def get_translated_results(original_results, selected_language, languages, fastapi_url, result_key):
+def get_translated_results(original_results, selected_language, languages, fastapi_url):
     """Get translated results with caching"""
     target_lang_code = languages[selected_language]
-    cache_key = f"{result_key}_{selected_language}"
+    cache_key = f"{original_results['id']}_{selected_language}"
     
     if cache_key not in st.session_state.translation_cache:
         # Show translation progress
         with st.spinner(f"🌐 Translating to {selected_language}..."):
             translated_results = {
+                'id': original_results['id'],
+                'filename': original_results['filename'],
                 'is_plant': original_results['is_plant'],  # Don't translate boolean
                 'label': translate_text_content(original_results['label'], target_lang_code, fastapi_url),
                 'confidence': original_results['confidence'],  # Don't translate number
                 'message': translate_text_content(original_results['message'], target_lang_code, fastapi_url),
                 'disease_details': translate_text_content(original_results['disease_details'], target_lang_code, fastapi_url),
-                'filename': original_results['filename']
+                'timestamp': original_results['timestamp']
             }
             
             st.session_state.translation_cache[cache_key] = translated_results
@@ -1066,14 +1080,19 @@ if st.session_state.current_page == "Disease Detection":
                                         if "False" in str(is_plant):
                                             st.error("❌ The uploaded image doesn't appear to be a plant. Please upload a clear image of a plant leaf or affected area.")
                                         else:
-                                            # Display results with dual language support
-                                            display_analysis_results_with_translation(result, uploaded_image.name, FASTAPI_URL)
+                                            # Store results in session state
+                                            store_analysis_results(result, uploaded_image.name)
+                                            # Force a rerun to display the new results
+                                            st.rerun()
                                     else:
                                         st.error("❌ Unexpected response format from analysis API.")
                                 else:
                                     st.error("❌ Analysis failed. Please try again.")
                         else:
                             st.error("❌ Failed to upload image to cloud storage.")
+    
+    # Display all stored results (this will persist across reruns)
+    display_all_stored_results(FASTAPI_URL)
 
 elif st.session_state.current_page == "Chat Assistant":
     # Include CSS with the HTML in components.html
