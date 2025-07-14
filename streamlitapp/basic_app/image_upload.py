@@ -801,8 +801,10 @@ def display_all_stored_results(fastapi_url):
     # Indian languages for secondary display (Hindi is default)
     SECONDARY_LANGUAGES = {
         "हिंदी": "hi",
-        "বাংলা": "bn",
         "தமிழ்": "ta",
+        "বাংলা": "bn",
+        "മലയാളം": "ml",
+        "ಕನ್ನಡ": "kn",
         "తెలుగు": "te",
         "मराठी": "mr",
         "ગુજરાતી": "gu",
