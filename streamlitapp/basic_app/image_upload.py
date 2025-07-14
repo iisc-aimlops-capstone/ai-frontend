@@ -569,7 +569,7 @@ def get_s3_client():
             's3',
             aws_access_key_id=st.secrets["aws_access_key_id"],
             aws_secret_access_key=st.secrets["aws_secret_access_key"],
-            region_name=st.secrets.get("aws_region", "us-east-1")
+            region_name=os.environ.get("AWS_REGION", "us-east-2")
         )
         return s3_client
     except KeyError:
@@ -716,12 +716,10 @@ def display_analysis_results(result_data, image_name):
 
 # Main content based on selected page
 if st.session_state.current_page == "Disease Detection":
-    # Configuration section (you can move this to secrets or config)
-    if 'config' not in st.session_state:
-        st.session_state.config = {
-            'bucket_name': st.secrets.get("s3_bucket_name", "plant-disease-images"),
-            'fastapi_url': st.secrets.get("fastapi_url", "http://localhost:8000")
-        }
+    # Use existing environment variables
+    S3_BUCKET = os.environ.get("S3_BUCKET_NAME", "s3b-iisc-aimlops-cap-images")
+    S3_REGION = os.environ.get("AWS_REGION", "us-east-2")
+    FASTAPI_URL = os.environ.get("FASTAPI_URL", "https://plant-disease-detection.aichamp.publicvm.com/api")
     
     # Use Streamlit columns instead of CSS Grid
     col1, col2, col3 = st.columns(3)
@@ -813,7 +811,7 @@ if st.session_state.current_page == "Disease Detection":
                         # Upload to S3
                         s3_url = upload_to_s3(
                             image_bytes,
-                            st.session_state.config['bucket_name'],
+                            S3_BUCKET,
                             unique_filename
                         )
                         
@@ -824,7 +822,7 @@ if st.session_state.current_page == "Disease Detection":
                                 # Call FastAPI backend
                                 result = call_disease_detection_api(
                                     s3_url,
-                                    st.session_state.config['fastapi_url']
+                                    FASTAPI_URL
                                 )
                                 
                                 if result:
@@ -845,7 +843,6 @@ if st.session_state.current_page == "Disease Detection":
                                     st.error("❌ Analysis failed. Please try again.")
                         else:
                             st.error("❌ Failed to upload image. Please try again.")
-
 
 elif st.session_state.current_page == "Chat Assistant":
     # Include CSS with the HTML in components.html
