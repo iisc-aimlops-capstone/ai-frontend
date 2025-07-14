@@ -565,22 +565,32 @@ with col2:
 
 
 # Configure AWS S3 client
+# Configure AWS S3 client
 def get_s3_client():
     """Initialize S3 client with credentials"""
     try:
+        # First try to use IAM role (for ECS/EC2) 
         s3_client = boto3.client(
             's3',
-            aws_access_key_id=st.secrets["aws_access_key_id"],
-            aws_secret_access_key=st.secrets["aws_secret_access_key"],
             region_name=os.environ.get("AWS_REGION", "us-east-2")
         )
         return s3_client
-    except KeyError:
-        st.error("AWS credentials not found in secrets. Please configure them in Streamlit secrets.")
-        return None
     except Exception as e:
-        st.error(f"Error initializing S3 client: {str(e)}")
-        return None
+        # Fallback to Streamlit secrets if IAM role fails
+        try:
+            s3_client = boto3.client(
+                's3',
+                aws_access_key_id=st.secrets["aws_access_key_id"],
+                aws_secret_access_key=st.secrets["aws_secret_access_key"],
+                region_name=os.environ.get("AWS_REGION", "us-east-2")
+            )
+            return s3_client
+        except KeyError:
+            st.error("AWS credentials not found. Please ensure ECS task has proper IAM role or configure Streamlit secrets.")
+            return None
+        except Exception as e2:
+            st.error(f"Error initializing S3 client: {str(e2)}")
+            return None
 
 def upload_to_s3(file_obj, bucket_name, object_key):
     """Upload file to S3 bucket"""
