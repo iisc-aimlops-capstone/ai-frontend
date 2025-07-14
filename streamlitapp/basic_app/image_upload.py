@@ -757,6 +757,7 @@ def translate_text_content(text, target_language, fastapi_url):
         # Adjust this based on your actual API response structure
         return result.get('translated_text', text)
     return text
+
 def display_analysis_results_with_translation(result_data, image_name, fastapi_url):
     """Alternative version with better button layout"""
     if not result_data or not isinstance(result_data, list) or len(result_data) == 0:
@@ -865,14 +866,20 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
     with trans_col2:
         translate_button = st.button("🔄 Translate Results", key=f"translate_{filename}")
     
-    # Translation results
+    # Translation results - Outside the column layout to preserve original results
     if translate_button:
         if selected_language != "English":
             target_lang_code = LANGUAGES[selected_language]
             
             with st.spinner(f"🌐 Translating to {selected_language}..."):
-                # Create a container for translated results
-                st.markdown(f"### 📝 Results in {selected_language}")
+                # Create a separate section for translated results
+                st.markdown("---")
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+                            padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                    <h3 style="color: white; margin: 0; text-align: center;">📝 Results in {selected_language}</h3>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 # Translate message
                 translated_message = translate_text_content(message, target_lang_code, fastapi_url)
@@ -881,6 +888,10 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
                 # Translate label
                 translated_label = translate_text_content(label, target_lang_code, fastapi_url)
                 st.info(f"🔬 **Disease Classification:** {translated_label}")
+                
+                # Show confidence (doesn't need translation)
+                confidence_color = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
+                st.warning(f"{confidence_color} **Confidence:** {confidence:.1f}%")
                 
                 # Translate disease details
                 if disease_details:
@@ -913,7 +924,7 @@ def display_analysis_results_with_translation(result_data, image_name, fastapi_u
                 
                 st.success(f"✅ Translation to {selected_language} completed!")
         else:
-            st.info("English is already the default language.")
+            st.info("Results are already in English.")
     
     # Language info
     st.markdown("""
