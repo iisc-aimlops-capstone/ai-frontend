@@ -709,24 +709,46 @@ with tab2:
 # ================================================================
 # Upload Section with enhanced styling
 # Upload Section with styled dropzone container
-with st.container():
-    st.markdown("""
-    <div style="background: #f0fff0; border: 3px dashed #4CAF50; padding: 2.5rem; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.05); position: relative;">
-        <h2 style="color: #2E8B57; margin-bottom: 0.8rem;">📤 Upload Plant Images for Analysis</h2>
-        <p style="color: #555; font-size: 1.05rem;">Select high-quality images of your plants for instant AI-powered disease detection</p>
-        <p style="color: #888; font-size: 0.9rem;">📷 Supported formats: PNG, JPG, JPEG &nbsp;&nbsp; 🧾 Max size: 10MB per image</p>
-    """, unsafe_allow_html=True)
+# with st.container():
+#     st.markdown("""
+#     <div style="background: #f0fff0; border: 3px dashed #4CAF50; padding: 2.5rem; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.05); position: relative;">
+#         <h2 style="color: #2E8B57; margin-bottom: 0.8rem;">📤 Upload Plant Images for Analysis</h2>
+#         <p style="color: #555; font-size: 1.05rem;">Select high-quality images of your plants for instant AI-powered disease detection</p>
+#     """, unsafe_allow_html=True)
 
-    # Add file uploader INSIDE the green container
-    uploaded_images = st.file_uploader(
-        label="",
-        type=["png", "jpg", "jpeg"],
-        accept_multiple_files=True,
-        label_visibility="collapsed",
-        help="Drag and drop or browse plant images inside this green area"
-    )
+#     # Add file uploader INSIDE the green container
+#     uploaded_images = st.file_uploader(
+#         label="",
+#         type=["png", "jpg", "jpeg"],
+#         accept_multiple_files=True,
+#         label_visibility="collapsed",
+#         help="Drag and drop or browse plant images inside this green area"
+#     )
 
-    st.markdown("</div>", unsafe_allow_html=True)
+#     st.markdown("</div>", unsafe_allow_html=True)
+
+st.markdown("---")
+
+# 1. Use markdown for a clean, centered header
+st.markdown(
+    "<h2 style='text-align: center;'>🍃 Upload Plant Images for Analysis</h2>",
+    unsafe_allow_html=True
+)
+st.markdown(
+    "<p style='text-align: center; color: #666;'>Select high-quality images of your plants for instant AI-powered disease detection</p>",
+    unsafe_allow_html=True
+)
+
+# 2. Use the native file uploader directly, with a helpful label
+uploaded_images = st.file_uploader(
+    "Drag and drop files here or click to browse",
+    type=['png', 'jpg', 'jpeg'],
+    accept_multiple_files=True,
+    help="You can upload multiple images at once. Supported formats: PNG, JPG, JPEG."
+)
+
+# 3. Add a divider for clean visual separation
+st.divider()
 
 if uploaded_images:
     # Display number of uploaded files with animation
@@ -1038,6 +1060,7 @@ if uploaded_images:
     
     # Clear progress bar
     progress_bar.empty()
+    
 
 
 
