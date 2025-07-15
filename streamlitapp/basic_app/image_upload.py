@@ -57,16 +57,19 @@ st.markdown("""
     
     /* Professional Header */
     .professional-header {
-        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+        /* Switched to a lush green gradient */
+        background: linear-gradient(135deg, #4CAF50 0%, #2E8B57 50%, #006400 100%);
         color: white;
         padding: 2rem 0;
         margin: -1rem -1rem 2rem -1rem;
         border-radius: 0 0 20px 20px;
-        box-shadow: 0 10px 30px rgba(30, 58, 138, 0.3);
+        /* Adjusted shadow to a dark green for consistency */
+        box-shadow: 0 10px 30px rgba(18, 77, 26, 0.3);
         position: relative;
         overflow: hidden;
     }
-    
+
+    /* This subtle grain texture still works well with a natural theme */
     .professional-header::before {
         content: "";
         position: absolute;
@@ -77,7 +80,8 @@ st.markdown("""
         background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
         opacity: 0.3;
     }
-    
+
+    /* No changes needed for the content wrapper */
     .header-content {
         max-width: 1200px;
         margin: 0 auto;
@@ -85,16 +89,16 @@ st.markdown("""
         position: relative;
         z-index: 1;
     }
-    
+
+    /* Title changed to a solid, high-contrast color for better readability */
     .header-title {
         font-size: 3rem;
         font-weight: 800;
         margin-bottom: 0.5rem;
-        background: linear-gradient(45deg, #ffffff, #e0f2fe);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        /* Changed from a gradient to a solid color */
+        color: white;
         text-align: center;
+        /* Removed the background-clip properties */
     }
     
     .header-subtitle {
@@ -303,11 +307,19 @@ st.markdown("""
         background: white;
         border-radius: 25px;
         padding: 2rem;
-        margin: 2rem 0;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         border: 1px solid rgba(34, 197, 94, 0.2);
-        max-height: 600px;
-        overflow-y: auto;
+    }
+    /* This styles the container for each chat message */
+    div[data-testid="chat-message-container"] {
+        background-color: #f0f2f6; /* A light gray for assistant messages */
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    /* This targets user messages to keep them on the default background */
+    div[data-testid="chat-message-container"][data-testid*="user"] {
+        background-color: transparent;
     }
     
     .chat-message {
@@ -339,14 +351,14 @@ st.markdown("""
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
-    .chat-input-section {
-        background: white;
-        border-radius: 20px;
-        padding: 2rem;
-        margin: 2rem 0;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        border: 2px solid #22c55e;
-    }
+    # .chat-input-section {
+    #     background: white;
+    #     border-radius: 20px;
+    #     padding: 2rem;
+    #     margin: 2rem 0;
+    #     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    #     border: 2px solid #22c55e;
+    # }
     
     /* Professional Footer */
     .professional-footer {
@@ -543,26 +555,82 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
-
-# Enhanced Navigation
 st.markdown("""
-<div class="nav-container">
-    <div class="nav-tabs">
-        <div class="nav-tab-description">
-            <h3 style="text-align: center; margin-bottom: 1rem; color: #1f2937;">Choose Your Service</h3>
-        </div>
-    </div>
-</div>
+<style>
+    /* Style for the container of the buttons */
+    div[data-testid="column"] {
+        text-align: center;
+    }
+
+    /* General button style */
+    .stButton>button {
+        background-color: #f0f2f6;
+        color: #333;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 1rem 1rem; /* Increased padding for a taller button */
+        width: 100%;
+        transition: all 0.2s;
+        font-size: 10rem !important; /* <-- This makes the text and emoji bigger */
+    }
+    
+    /* Style for the ACTIVE button */
+    .stButton.active>button {
+        background-color: #2E8B57; /* A nice green */
+        color: white;
+        border: 1px solid #2E8B57;
+    }
+</style>
 """, unsafe_allow_html=True)
 
+# Enhanced Navigation
+st.markdown("<h3 style='text-align: center;'>Choose Your Service</h3>", unsafe_allow_html=True)
+
+# Determine which button is active for styling
+is_detection_active = st.session_state.current_page == "Disease Detection"
+is_chat_active = st.session_state.current_page == "Chat Assistant"
+
+# col1, col2 = st.columns(2)
+# with col1:
+#     if st.button("🔬 Disease Detection", key="nav_detection", use_container_width=True):
+#         st.session_state.current_page = "Disease Detection"
+# with col2:
+#     if st.button("🤖 AI Chat Assistant", key="nav_chat", use_container_width=True):
+#         st.session_state.current_page = "Chat Assistant"
 col1, col2 = st.columns(2)
 with col1:
+    # Use a custom class for the active button
+    st.markdown('<div class="stButton active">' if is_detection_active else '<div class="stButton">', unsafe_allow_html=True)
     if st.button("🔬 Disease Detection", key="nav_detection", use_container_width=True):
         st.session_state.current_page = "Disease Detection"
+    st.markdown('</div>', unsafe_allow_html=True)
+
 with col2:
+    st.markdown('<div class="stButton active">' if is_chat_active else '<div class="stButton">', unsafe_allow_html=True)
     if st.button("🤖 AI Chat Assistant", key="nav_chat", use_container_width=True):
         st.session_state.current_page = "Chat Assistant"
+    st.markdown('</div>', unsafe_allow_html=True)
 
+st.divider()
+# st.markdown("""
+# <style>
+#     /* This targets the buttons within the tab bar */
+#     button[data-testid="stTabs-tab"] {
+#         font-size: 5rem;       /* Increases the font size */
+#         padding: 0.75rem 1.5rem;  /* Increases the padding to make the tab bar taller */
+#     }
+# </style>
+# """, unsafe_allow_html=True)
+# st.markdown("<h2 style='text-align: center;'>Choose Your Service</h2>", unsafe_allow_html=True)
+
+# # 1. Create the tabs
+# tab1, tab2 = st.tabs(["🧬 Disease Detection", "🤖 AI Chat Assistant"])
+# with tab1:
+#     # if st.button("🔬 Disease Detection", key="nav_detection", use_container_width=True):
+#     st.session_state.current_page = "Disease Detection"
+# with tab2:
+#     # if st.button("🤖 AI Chat Assistant", key="nav_chat", use_container_width=True):
+#     st.session_state.current_page = "Chat Assistant"
 
 # Configure AWS S3 client
 # Configure AWS S3 client
@@ -686,8 +754,8 @@ def display_analysis_results(result_data, image_name):
         confidence_color = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
         st.warning(f"{confidence_color} **Confidence:** {confidence:.1f}%")
     
-    def call_translation_api(text, target_language, fastapi_url):
-        """Call FastAPI backend for translation"""
+def call_translation_api(text, target_language, fastapi_url):
+    """Call FastAPI backend for translation"""
     try:
         # Prepare payload for translation API
         payload = {
@@ -961,68 +1029,59 @@ if st.session_state.current_page == "Disease Detection":
     S3_REGION = os.environ.get("AWS_REGION", "us-east-2")
     FASTAPI_URL = os.environ.get("FASTAPI_URL", "https://plant-disease-detection.aichamp.publicvm.com/api")
     
-    # Use Streamlit columns instead of CSS Grid
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div class="feature-card">
-            <span class="feature-icon">🔬</span>
-            <h3 class="feature-title">Advanced AI Detection</h3>
-            <p class="feature-description">State-of-the-art machine learning algorithms trained on thousands of plant images for accurate disease identification.</p>
-            <ul class="feature-benefits">
-                <li>99.2% accuracy rate</li>
-                <li>Real-time analysis</li>
-                <li>Multi-species support</li>
-                <li>Instant results</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="feature-card">
-            <span class="feature-icon">🌍</span>
-            <h3 class="feature-title">Global Coverage</h3>
-            <p class="feature-description">Comprehensive database covering plant diseases from different climates and regions worldwide.</p>
-            <ul class="feature-benefits">
-                <li>50+ disease types</li>
-                <li>Multi-language support</li>
-                <li>Regional expertise</li>
-                <li>Climate-specific insights</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div class="feature-card">
-            <span class="feature-icon">⚡</span>
-            <h3 class="feature-title">Instant Solutions</h3>
-            <p class="feature-description">Get immediate treatment recommendations and prevention strategies for identified plant diseases.</p>
-            <ul class="feature-benefits">
-                <li>Treatment protocols</li>
-                <li>Prevention tips</li>
-                <li>Organic solutions</li>
-                <li>Expert guidance</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
     # Upload Section
+    # st.markdown("""
+    # <div class="upload-section">
+    #     <span class="upload-icon">📸</span>
+    #     <h2 class="upload-title">Upload Plant Images</h2>
+    #     <p class="upload-subtitle">Drop your plant images here for instant AI-powered disease detection</p>
+    # </div>
+    # """, unsafe_allow_html=True)
+
     st.markdown("""
-    <div class="upload-section">
-        <span class="upload-icon">📸</span>
-        <h2 class="upload-title">Upload Plant Images</h2>
-        <p class="upload-subtitle">Drop your plant images here for instant AI-powered disease detection</p>
-    </div>
+    <style>
+        /* This targets the main container of the file uploader */
+        [data-testid="stFileUploader"] {
+            background-color: #f0f8f0;
+            border: 2px dashed #2E8B57;
+            border-radius: 15px;
+            padding: 2rem;
+        }
+        
+        /* This targets the text inside the label */
+        [data-testid="stFileUploader"] p {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #333;
+            margin: 0;
+        }
+        
+        /* This targets the "Browse files" button */
+        [data-testid="stFileUploader"] button {
+            background-color: #2E8B57;
+            color: white;
+        }
+    </style>
     """, unsafe_allow_html=True)
-    
+
+
+    # 2. Create a markdown string for the custom label
+    # uploader_label = """
+    # <p style="text-align: center; font-size: 2.5rem; margin-bottom: 0.5rem;">📸</p>
+    # <p style="text-align: center;">Drop your plant images here for instant AI-powered disease detection</p>
+    # """
+    st.markdown("""
+        <div style="text-align: center; padding: 0.5rem;">
+            <h2 style="color: 'green';">Custom Plant Disease Detection & Treatment recomendation</h2>
+                <p style="color: #6b7280;">Upload an image and get the disease details and treamtment recomendations</p>
+        </div>
+    """, unsafe_allow_html=True)
+    st.divider()
     uploaded_images = st.file_uploader(
-        label="Choose plant images...",
+        label="Upload Plant image",
         type=["png", "jpg", "jpeg"],
         accept_multiple_files=True,
-        help="Supported formats: PNG, JPG, JPEG. Maximum file size: 10MB"
+        help="Supported formats: PNG, JPG, JPEG. Maximum file size: 10MB",
     )
     
     if uploaded_images:
@@ -1095,6 +1154,56 @@ if st.session_state.current_page == "Disease Detection":
     
     # Display all stored results (this will persist across reruns)
     display_all_stored_results(FASTAPI_URL)
+
+    st.divider()
+
+    # Use Streamlit columns instead of CSS Grid
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <span class="feature-icon">🔬</span>
+            <h3 class="feature-title">Advanced AI Detection</h3>
+            <p class="feature-description">State-of-the-art machine learning algorithms trained on thousands of plant images for accurate disease identification.</p>
+            <ul class="feature-benefits">
+                <li>99.2% accuracy rate</li>
+                <li>Real-time analysis</li>
+                <li>Multi-species support</li>
+                <li>Instant results</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <span class="feature-icon">🌍</span>
+            <h3 class="feature-title">Global Coverage</h3>
+            <p class="feature-description">Comprehensive database covering plant diseases from different climates and regions worldwide.</p>
+            <ul class="feature-benefits">
+                <li>50+ disease types</li>
+                <li>Multi-language support</li>
+                <li>Regional expertise</li>
+                <li>Climate-specific insights</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <span class="feature-icon">⚡</span>
+            <h3 class="feature-title">Instant Solutions</h3>
+            <p class="feature-description">Get immediate treatment recommendations and prevention strategies for identified plant diseases.</p>
+            <ul class="feature-benefits">
+                <li>Treatment protocols</li>
+                <li>Prevention tips</li>
+                <li>Organic solutions</li>
+                <li>Expert guidance</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
 elif st.session_state.current_page == "Chat Assistant":
     # Include CSS with the HTML in components.html
@@ -1202,22 +1311,23 @@ elif st.session_state.current_page == "Chat Assistant":
     </div>
     """
     
-    components.html(feature_cards_html, height=500, scrolling=True)
+    #components.html(feature_cards_html, height=500, scrolling=True)
     
     # Chat Interface
     st.markdown("""
-    <div class="chat-container">
-        <div style="text-align: center; padding: 2rem;">
-            <h2 style="color: #1f2937; margin-bottom: 1rem;">💬 AI Plant Health Assistant</h2>
+        <div style="text-align: center; padding: 0.5rem;">
+            <h2 style="color: 'green';">💬 AI Plant Health Assistant</h2>
             <p style="color: #6b7280;">Ask me anything about plant diseases, treatments, and care tips</p>
         </div>
-    </div>
     """, unsafe_allow_html=True)
+    # st.header("💬 AI Plant Health Assistant")
+    # st.write("Ask me anything about plant diseases, treatments, and care tips.")
+    st.divider()
     
     # Display chat messages
     chat_container = st.container()
     with chat_container:
-        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+        #st.markdown('<div class="chat-container">', unsafe_allow_html=True)
         
         for message in st.session_state.messages:
             if message["role"] == "user":
@@ -1237,7 +1347,8 @@ elif st.session_state.current_page == "Chat Assistant":
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Chat Input Section
-    st.markdown('<div class="chat-input-section">', unsafe_allow_html=True)
+    st.divider()
+    # st.markdown('<div class="chat-input-section">', unsafe_allow_html=True)
     
     # Input type selection
     input_type = st.radio(
@@ -1373,8 +1484,8 @@ with st.sidebar:
             <h2 style="color: #1f2937; margin-bottom: 1rem;">🌱 PlantCare AI</h2>
             <p style="color: #6b7280; font-size: 1rem; margin-bottom: 1.5rem;">Your intelligent plant health companion</p>
             <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; padding: 1rem; border-radius: 15px; margin-bottom: 1rem;">
-                <strong>🎯 Current Service</strong><br>
-                <span style="font-size: 1.1rem;">{}</span>
+                <strong>🎯</strong><br>
+                <span style="font-size: 1.1rem;"><strong>{}</strong></span>
             </div>
         </div>
     </div>
@@ -1403,28 +1514,28 @@ with st.sidebar:
         </div>
         """, unsafe_allow_html=True)
         
-        # Detection Statistics
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 1.5rem; border-radius: 15px; margin-bottom: 1.5rem; border: 1px solid #0ea5e9;">
-            <h4 style="color: #0369a1; margin-bottom: 1rem;">📊 Detection Stats</h4>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <span style="color: #374151;">Accuracy Rate:</span>
-                <span style="color: #0369a1; font-weight: 600;">99.2%</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <span style="color: #374151;">Diseases Detected:</span>
-                <span style="color: #0369a1; font-weight: 600;">50+</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <span style="color: #374151;">Processing Time:</span>
-                <span style="color: #0369a1; font-weight: 600;">&lt;3 sec</span>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-                <span style="color: #374151;">Images Analyzed:</span>
-                <span style="color: #0369a1; font-weight: 600;">10,000+</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        # # Detection Statistics
+        # st.markdown("""
+        # <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 1.5rem; border-radius: 15px; margin-bottom: 1.5rem; border: 1px solid #0ea5e9;">
+        #     <h4 style="color: #0369a1; margin-bottom: 1rem;">📊 Detection Stats</h4>
+        #     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+        #         <span style="color: #374151;">Accuracy Rate:</span>
+        #         <span style="color: #0369a1; font-weight: 600;">99.2%</span>
+        #     </div>
+        #     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+        #         <span style="color: #374151;">Diseases Detected:</span>
+        #         <span style="color: #0369a1; font-weight: 600;">50+</span>
+        #     </div>
+        #     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+        #         <span style="color: #374151;">Processing Time:</span>
+        #         <span style="color: #0369a1; font-weight: 600;">&lt;3 sec</span>
+        #     </div>
+        #     <div style="display: flex; justify-content: space-between;">
+        #         <span style="color: #374151;">Images Analyzed:</span>
+        #         <span style="color: #0369a1; font-weight: 600;">10,000+</span>
+        #     </div>
+        # </div>
+        # """, unsafe_allow_html=True)
         
     else:
         st.markdown("""
