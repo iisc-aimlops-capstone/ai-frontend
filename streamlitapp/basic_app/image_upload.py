@@ -1112,58 +1112,58 @@ if st.session_state.current_page == "Disease Detection":
                 st.image(uploaded_image, caption=f"📷 {uploaded_image.name}", use_container_width =False)
                 
                 # Add processing button for each image
-                # if st.button(f"🔍 Analyze {uploaded_image.name}", key=f"analyze_{idx}"):
-                with st.spinner("🚀 Uploading to cloud storage..."):
-                    # Generate unique filename
-                    file_extension = uploaded_image.name.split('.')[-1].lower()
-                    unique_filename = f"{uuid.uuid4()}.{file_extension}"
-                    
-                    # Convert uploaded file to bytes
-                    uploaded_image.seek(0)  # Reset file pointer
-                    image_bytes = io.BytesIO(uploaded_image.read())
-                    
-                    # Upload to S3 (you'll need to implement this function)
-                    s3_url = upload_to_s3(
-                        image_bytes,
-                        S3_BUCKET,
-                        unique_filename
-                    )
-                    
-                    if s3_url:
-                        st.success("✅ Image uploaded to cloud storage!")
+                if st.button(f"🔍 Analyze {uploaded_image.name}", key=f"analyze_{idx}"):
+                    with st.spinner("🚀 Uploading to cloud storage..."):
+                        # Generate unique filename
+                        file_extension = uploaded_image.name.split('.')[-1].lower()
+                        unique_filename = f"{uuid.uuid4()}.{file_extension}"
                         
-                        with st.spinner("🤖 AI is analyzing your plant image..."):
-                            # Call FastAPI backend
-                            result = call_disease_detection_api(
-                                s3_url,
-                                FASTAPI_URL,
-                                unique_filename
-                            )
+                        # Convert uploaded file to bytes
+                        uploaded_image.seek(0)  # Reset file pointer
+                        image_bytes = io.BytesIO(uploaded_image.read())
+                        
+                        # Upload to S3 (you'll need to implement this function)
+                        s3_url = upload_to_s3(
+                            image_bytes,
+                            S3_BUCKET,
+                            unique_filename
+                        )
+                        
+                        if s3_url:
+                            st.success("✅ Image uploaded to cloud storage!")
                             
-                            if result:
-                                # Convert to list format if needed
-                                if isinstance(result, dict):
-                                    result = [result]
+                            with st.spinner("🤖 AI is analyzing your plant image..."):
+                                # Call FastAPI backend
+                                result = call_disease_detection_api(
+                                    s3_url,
+                                    FASTAPI_URL,
+                                    unique_filename
+                                )
                                 
-                                # Check if the result indicates a successful analysis
-                                if isinstance(result, list) and len(result) > 0:
-                                    first_result = result[0]
-                                    is_plant = first_result.get("is_plant", "")
+                                if result:
+                                    # Convert to list format if needed
+                                    if isinstance(result, dict):
+                                        result = [result]
                                     
-                                    # Check if it's actually a plant
-                                    if "False" in str(is_plant):
-                                        st.error("❌ The uploaded image doesn't appear to be a plant. Please upload a clear image of a plant leaf or affected area.")
+                                    # Check if the result indicates a successful analysis
+                                    if isinstance(result, list) and len(result) > 0:
+                                        first_result = result[0]
+                                        is_plant = first_result.get("is_plant", "")
+                                        
+                                        # Check if it's actually a plant
+                                        if "False" in str(is_plant):
+                                            st.error("❌ The uploaded image doesn't appear to be a plant. Please upload a clear image of a plant leaf or affected area.")
+                                        else:
+                                            # Store results in session state
+                                            store_analysis_results(result, uploaded_image.name)
+                                            # Force a rerun to display the new results
+                                            st.rerun()
                                     else:
-                                        # Store results in session state
-                                        store_analysis_results(result, uploaded_image.name)
-                                        # Force a rerun to display the new results
-                                        st.rerun()
+                                        st.error("❌ Unexpected response format from analysis API.")
                                 else:
-                                    st.error("❌ Unexpected response format from analysis API.")
-                            else:
-                                st.error("❌ Analysis failed. Please try again.")
-                    else:
-                        st.error("❌ Failed to upload image to cloud storage.")
+                                    st.error("❌ Analysis failed. Please try again.")
+                        else:
+                            st.error("❌ Failed to upload image to cloud storage.")
     
     # Display all stored results (this will persist across reruns)
     display_all_stored_results(FASTAPI_URL)
