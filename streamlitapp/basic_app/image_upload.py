@@ -737,19 +737,30 @@ def display_analysis_results(result_data, image_name):
     disease_details = result.get("disease_details", "")
     
     # Display results
-    st.success(f"✅ Analysis complete for {filename}")
-    # st.info(f"📋 **Status:** {message}")
-    
-    # # Plant detection result
-    # if "True" in str(is_plant):
-    #     st.success(f"🌱 **Plant Detection:** {is_plant}")
-    # else:
-    #     st.warning(f"⚠️ **Plant Detection:** {is_plant}")
+    st.success(f"✅ Analysis complete for {filename} | 📋 **Status:** {message}")
+    # st.info(f"")
+    confidence_color = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
+    # Plant detection result
+    if "True" in str(is_plant):
+        st.success(
+            f"""
+            🌱 **Plant Detection:** {is_plant}\n
+            🔬 **Disease Classification:** {label}\n
+            {confidence_color} **Confidence:** {confidence:.1f}%
+            """
+            )
+    else:
+        st.warning(
+            f"""
+            ⚠️ **Plant Detection:** {is_plant}\n
+            {confidence_color} **Confidence:** {confidence:.1f}%
+            """
+            )
     
     # # Disease classification
     # col1, col2 = st.columns(2)
     # with col1:
-    #     st.info(f"🔬 **Disease Classification:** {label}")
+    #     st.info(f"")
     # with col2:
     #     confidence_color = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
     #     st.warning(f"{confidence_color} **Confidence:** {confidence:.1f}%")
@@ -757,34 +768,34 @@ def display_analysis_results(result_data, image_name):
     # --- Combined Results Card ---
 
     # Determine the color for the plant detection status
-    plant_status_color = "#28a745" if "True" in str(is_plant) else "#ffc107"
-    plant_icon = "🌱" if "True" in str(is_plant) else "⚠️"
+    # plant_status_color = "#28a745" if "True" in str(is_plant) else "#ffc107"
+    # plant_icon = "🌱" if "True" in str(is_plant) else "⚠️"
 
-    # Determine the color for the confidence score
-    confidence_color = "#28a745" if confidence > 80 else "#ffc107" if confidence > 60 else "#dc3545"
-    confidence_icon = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
+    # # Determine the color for the confidence score
+    # confidence_color = "#28a745" if confidence > 80 else "#ffc107" if confidence > 60 else "#dc3545"
+    # confidence_icon = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
 
-    # Use a container to create the main card
-    with st.container(border=True):
-        # Main status message
-        st.markdown(f"📋 **Status:** {message}")
-        st.divider()
+    # # Use a container to create the main card
+    # with st.container(border=True):
+    #     # Main status message
+    #     st.markdown(f"📋 **Status:** {message}")
+    #     st.divider()
 
-        # Plant Detection and Disease Classification in columns
-        col1, col2 = st.columns(2)
+    #     # Plant Detection and Disease Classification in columns
+    #     col1, col2 = st.columns(2)
 
-        with col1:
-            st.markdown(
-                f'<p style="color:{plant_status_color}; font-weight: bold;">{plant_icon} Plant Detection: {is_plant}</p>',
-                unsafe_allow_html=True
-            )
-            st.markdown(f"🔬 **Disease:** {label}")
+    #     with col1:
+    #         st.markdown(
+    #             f'<p style="color:{plant_status_color}; font-weight: bold;">{plant_icon} Plant Detection: {is_plant}</p>',
+    #             unsafe_allow_html=True
+    #         )
+    #         st.markdown(f"🔬 **Disease:** {label}")
 
-        with col2:
-            st.markdown(
-                f'<p style="color:{confidence_color}; font-weight: bold;">{confidence_icon} Confidence: {confidence:.1f}%</p>',
-                unsafe_allow_html=True
-            )
+    #     with col2:
+    #         st.markdown(
+    #             f'<p style="color:{confidence_color}; font-weight: bold;">{confidence_icon} Confidence: {confidence:.1f}%</p>',
+    #             unsafe_allow_html=True
+    #         )
     
 def call_translation_api(text, target_language, fastapi_url):
     """Call FastAPI backend for translation"""
