@@ -607,7 +607,7 @@ with col1:
 
 with col2:
     st.markdown('<div class="stButton active">' if is_chat_active else '<div class="stButton">', unsafe_allow_html=True)
-    if st.button("🤖 AI Chat Assistant", key="nav_chat", use_container_width=True):
+    if st.button("🤖 Chat Assistant", key="nav_chat", use_container_width=True):
         st.session_state.current_page = "Chat Assistant"
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -738,52 +738,54 @@ def display_analysis_results(result_data, image_name):
     
     # Display results
     st.success(f"✅ Analysis complete for {filename}")
-    st.info(f"📋 **Status:** {message}")
+    # st.info(f"📋 **Status:** {message}")
     
-    # Plant detection result
-    if "True" in str(is_plant):
-        st.success(f"🌱 **Plant Detection:** {is_plant}")
-    else:
-        st.warning(f"⚠️ **Plant Detection:** {is_plant}")
+    # # Plant detection result
+    # if "True" in str(is_plant):
+    #     st.success(f"🌱 **Plant Detection:** {is_plant}")
+    # else:
+    #     st.warning(f"⚠️ **Plant Detection:** {is_plant}")
     
-    # Disease classification
-    col1, col2 = st.columns(2)
-    with col1:
-        st.info(f"🔬 **Disease Classification:** {label}")
-    with col2:
-        confidence_color = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
-        st.warning(f"{confidence_color} **Confidence:** {confidence:.1f}%")
-    
-def call_translation_api(text, target_language, fastapi_url):
-    """Call FastAPI backend for translation"""
-    try:
-        # Prepare payload for translation API
-        payload = {
-            "text": text,
-            "target_language": target_language
-        }
-        
-        # Make API call to translation endpoint
-        response = requests.post(
-            f"{fastapi_url}/translate",
-            json=payload,
-            headers={"Content-Type": "application/json"},
-            timeout=30
-        )
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
-            st.error(f"Translation API Error: {response.status_code} - {response.text}")
-            return None
-            
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error calling Translation API: {str(e)}")
-        return None
-    except Exception as e:
-        st.error(f"Unexpected error in translation API call: {str(e)}")
-        return None
+    # # Disease classification
+    # col1, col2 = st.columns(2)
+    # with col1:
+    #     st.info(f"🔬 **Disease Classification:** {label}")
+    # with col2:
+    #     confidence_color = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
+    #     st.warning(f"{confidence_color} **Confidence:** {confidence:.1f}%")
 
+    # --- Combined Results Card ---
+
+    # Determine the color for the plant detection status
+    plant_status_color = "#28a745" if "True" in str(is_plant) else "#ffc107"
+    plant_icon = "🌱" if "True" in str(is_plant) else "⚠️"
+
+    # Determine the color for the confidence score
+    confidence_color = "#28a745" if confidence > 80 else "#ffc107" if confidence > 60 else "#dc3545"
+    confidence_icon = "🟢" if confidence > 80 else "🟡" if confidence > 60 else "🔴"
+
+    # Use a container to create the main card
+    with st.container(border=True):
+        # Main status message
+        st.markdown(f"📋 **Status:** {message}")
+        st.divider()
+
+        # Plant Detection and Disease Classification in columns
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown(
+                f'<p style="color:{plant_status_color}; font-weight: bold;">{plant_icon} Plant Detection: {is_plant}</p>',
+                unsafe_allow_html=True
+            )
+            st.markdown(f"🔬 **Disease:** {label}")
+
+        with col2:
+            st.markdown(
+                f'<p style="color:{confidence_color}; font-weight: bold;">{confidence_icon} Confidence: {confidence:.1f}%</p>',
+                unsafe_allow_html=True
+            )
+    
 def call_translation_api(text, target_language, fastapi_url):
     """Call FastAPI backend for translation"""
     try:
@@ -1071,9 +1073,9 @@ if st.session_state.current_page == "Disease Detection":
     # <p style="text-align: center;">Drop your plant images here for instant AI-powered disease detection</p>
     # """
     st.markdown("""
-        <div style="text-align: center; padding: 0.5rem;">
-            <h2 style="color: 'green';">Custom Plant Disease Detection & Treatment recomendation</h2>
-                <p style="color: #6b7280;">Upload an image and get the disease details and treamtment recomendations</p>
+        <div style="text-align: center;">
+            <h2 style="color: 'green';">AI Plant Disease Detection & Treatment recomendation</h2>
+            <p style="color: #6b7280;">Upload an image and get the disease details and treamtment recomendations</p>
         </div>
     """, unsafe_allow_html=True)
     st.divider()
@@ -1096,61 +1098,61 @@ if st.session_state.current_page == "Disease Detection":
         cols = st.columns(min(len(uploaded_images), 3))
         for idx, uploaded_image in enumerate(uploaded_images):
             with cols[idx % 3]:
-                st.image(uploaded_image, caption=f"📷 {uploaded_image.name}", use_column_width=True)
+                st.image(uploaded_image, caption=f"📷 {uploaded_image.name}", use_container_width =False)
                 
                 # Add processing button for each image
-                if st.button(f"🔍 Analyze {uploaded_image.name}", key=f"analyze_{idx}"):
-                    with st.spinner("🚀 Uploading to cloud storage..."):
-                        # Generate unique filename
-                        file_extension = uploaded_image.name.split('.')[-1].lower()
-                        unique_filename = f"{uuid.uuid4()}.{file_extension}"
+                # if st.button(f"🔍 Analyze {uploaded_image.name}", key=f"analyze_{idx}"):
+                with st.spinner("🚀 Uploading to cloud storage..."):
+                    # Generate unique filename
+                    file_extension = uploaded_image.name.split('.')[-1].lower()
+                    unique_filename = f"{uuid.uuid4()}.{file_extension}"
+                    
+                    # Convert uploaded file to bytes
+                    uploaded_image.seek(0)  # Reset file pointer
+                    image_bytes = io.BytesIO(uploaded_image.read())
+                    
+                    # Upload to S3 (you'll need to implement this function)
+                    s3_url = upload_to_s3(
+                        image_bytes,
+                        S3_BUCKET,
+                        unique_filename
+                    )
+                    
+                    if s3_url:
+                        st.success("✅ Image uploaded to cloud storage!")
                         
-                        # Convert uploaded file to bytes
-                        uploaded_image.seek(0)  # Reset file pointer
-                        image_bytes = io.BytesIO(uploaded_image.read())
-                        
-                        # Upload to S3 (you'll need to implement this function)
-                        s3_url = upload_to_s3(
-                            image_bytes,
-                            S3_BUCKET,
-                            unique_filename
-                        )
-                        
-                        if s3_url:
-                            st.success("✅ Image uploaded to cloud storage!")
+                        with st.spinner("🤖 AI is analyzing your plant image..."):
+                            # Call FastAPI backend
+                            result = call_disease_detection_api(
+                                s3_url,
+                                FASTAPI_URL,
+                                unique_filename
+                            )
                             
-                            with st.spinner("🤖 AI is analyzing your plant image..."):
-                                # Call FastAPI backend
-                                result = call_disease_detection_api(
-                                    s3_url,
-                                    FASTAPI_URL,
-                                    unique_filename
-                                )
+                            if result:
+                                # Convert to list format if needed
+                                if isinstance(result, dict):
+                                    result = [result]
                                 
-                                if result:
-                                    # Convert to list format if needed
-                                    if isinstance(result, dict):
-                                        result = [result]
+                                # Check if the result indicates a successful analysis
+                                if isinstance(result, list) and len(result) > 0:
+                                    first_result = result[0]
+                                    is_plant = first_result.get("is_plant", "")
                                     
-                                    # Check if the result indicates a successful analysis
-                                    if isinstance(result, list) and len(result) > 0:
-                                        first_result = result[0]
-                                        is_plant = first_result.get("is_plant", "")
-                                        
-                                        # Check if it's actually a plant
-                                        if "False" in str(is_plant):
-                                            st.error("❌ The uploaded image doesn't appear to be a plant. Please upload a clear image of a plant leaf or affected area.")
-                                        else:
-                                            # Store results in session state
-                                            store_analysis_results(result, uploaded_image.name)
-                                            # Force a rerun to display the new results
-                                            st.rerun()
+                                    # Check if it's actually a plant
+                                    if "False" in str(is_plant):
+                                        st.error("❌ The uploaded image doesn't appear to be a plant. Please upload a clear image of a plant leaf or affected area.")
                                     else:
-                                        st.error("❌ Unexpected response format from analysis API.")
+                                        # Store results in session state
+                                        store_analysis_results(result, uploaded_image.name)
+                                        # Force a rerun to display the new results
+                                        st.rerun()
                                 else:
-                                    st.error("❌ Analysis failed. Please try again.")
-                        else:
-                            st.error("❌ Failed to upload image to cloud storage.")
+                                    st.error("❌ Unexpected response format from analysis API.")
+                            else:
+                                st.error("❌ Analysis failed. Please try again.")
+                    else:
+                        st.error("❌ Failed to upload image to cloud storage.")
     
     # Display all stored results (this will persist across reruns)
     display_all_stored_results(FASTAPI_URL)
@@ -1315,13 +1317,11 @@ elif st.session_state.current_page == "Chat Assistant":
     
     # Chat Interface
     st.markdown("""
-        <div style="text-align: center; padding: 0.5rem;">
-            <h2 style="color: 'green';">💬 AI Plant Health Assistant</h2>
+        <div style="text-align: center;">
+            <h2 style="color: 'green';">💬 AI Chat Assistant</h2>
             <p style="color: #6b7280;">Ask me anything about plant diseases, treatments, and care tips</p>
         </div>
     """, unsafe_allow_html=True)
-    # st.header("💬 AI Plant Health Assistant")
-    # st.write("Ask me anything about plant diseases, treatments, and care tips.")
     st.divider()
     
     # Display chat messages
