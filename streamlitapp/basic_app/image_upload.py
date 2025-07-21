@@ -1120,11 +1120,11 @@ if st.session_state.current_page == "Disease Detection":
                         
                         # Convert uploaded file to bytes
                         uploaded_image.seek(0)  # Reset file pointer
-                        image_bytes = io.BytesIO(uploaded_image.read())
+                        #image_bytes = io.BytesIO(uploaded_image.read())
                         
                         # Upload to S3 (you'll need to implement this function)
                         s3_url = upload_to_s3(
-                            image_bytes,
+                            uploaded_image,     # Pass directly as a file-like object
                             S3_BUCKET,
                             unique_filename
                         )
