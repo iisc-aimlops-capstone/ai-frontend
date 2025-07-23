@@ -1383,19 +1383,53 @@ elif st.session_state.current_page == "Chat Assistant":
                     "content": user_input,
                     "timestamp": datetime.now().isoformat()
                 })
+
+                # Prepare data for the API request
+                # The FastAPI endpoint expects a slightly different history format
+                api_history = []
+                for msg in st.session_state.messages:
+                    if msg["role"] == "user":
+                        api_history.append({"user": msg["content"]})
+                    elif msg["role"] == "assistant":
+                        # Find the preceding user message to pair with the assistant response
+                        # This is a simplified approach; a more robust one might use IDs
+                        if api_history and "assistant" not in api_history[-1]:
+                            api_history[-1]["assistant"] = msg["content"]
+
+                payload = {
+                    "message": user_input,
+                    "conversation_history": api_history
+                }
                 
                 # Simulate AI response
                 with st.spinner("🤖 PlantCare AI is thinking..."):
-                    time.sleep(2)
+                    # time.sleep(2)
+                    try:
+                        response = requests.post(f"{FASTAPI_URL}/chat/text", json=payload, timeout=30)
+                        
+                        if response.status_code == 200:
+                            ai_response = response.json().get("response")
+                            
+                            # Add AI response to the chat
+                            st.session_state.messages.append({
+                                "role": "assistant",
+                                "content": ai_response,
+                                "timestamp": datetime.now().isoformat()
+                            })
+                        else:
+                            st.error(f"Error from API: {response.status_code} - {response.text}")
+        
+                    except requests.exceptions.RequestException as e:
+                        st.error(f"Failed to connect to the chat service: {e}")
                     
-                    # Mock response
-                    response = f"Based on your description, this sounds like it could be a fungal infection. I recommend checking for proper drainage and air circulation. Would you like me to provide specific treatment options?"
+                    # # Mock response
+                    # response = f"Based on your description, this sounds like it could be a fungal infection. I recommend checking for proper drainage and air circulation. Would you like me to provide specific treatment options?"
                     
-                    st.session_state.messages.append({
-                        "role": "assistant",
-                        "content": response,
-                        "timestamp": datetime.now().isoformat()
-                    })
+                    # st.session_state.messages.append({
+                    #     "role": "assistant",
+                    #     "content": response,
+                    #     "timestamp": datetime.now().isoformat()
+                    # })
                     
                     st.rerun()
     
