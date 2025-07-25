@@ -24,7 +24,7 @@ st.set_page_config(
 # Configuration
 S3_BUCKET = os.environ.get("S3_BUCKET_NAME", "s3b-iisc-aimlops-cap-images")
 S3_REGION = os.environ.get("AWS_REGION", "us-east-2")
-FASTAPI_URL = os.environ.get("FASTAPI_URL", "http://alb-iisc-aimlops-cap-1747076197.us-east-2.elb.amazonaws.com/api")
+FASTAPI_URL = os.environ.get("FASTAPI_URL", "http://alb-iisc-aimlops-cap-1607096785.us-east-2.elb.amazonaws.com/api")
 
 # Initialize S3 client
 s3_client = boto3.client("s3", region_name=S3_REGION)
@@ -1040,7 +1040,7 @@ if st.session_state.current_page == "Disease Detection":
     # Use existing environment variables
     S3_BUCKET = os.environ.get("S3_BUCKET_NAME", "s3b-iisc-aimlops-cap-images")
     S3_REGION = os.environ.get("AWS_REGION", "us-east-2")
-    FASTAPI_URL = os.environ.get("FASTAPI_URL", "http://alb-iisc-aimlops-cap-1747076197.us-east-2.elb.amazonaws.com/api")
+    FASTAPI_URL = os.environ.get("FASTAPI_URL", "http://alb-iisc-aimlops-cap-1607096785.us-east-2.elb.amazonaws.com/api")
     
     # Upload Section
     # st.markdown("""
